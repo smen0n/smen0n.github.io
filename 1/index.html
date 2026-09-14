@@ -256,11 +256,11 @@
                 <h3>Cathedral</h3>
                 <div class="dual-image-container">
                     <div class="img-box">
-                        <img src="./original_cathedral.jpg" alt="Original Cathedral">
+                        <img src="media/original_cathedral.jpg" alt="Original Cathedral">
                         <div class="img-label">Original</div>
                     </div>
                     <div class="img-box">
-                        <img src="./aligned_cathedral.jpg" alt="Aligned Cathedral">
+                        <img src="media/aligned_cathedral.jpg" alt="Aligned Cathedral">
                         <div class="img-label">Aligned</div>
                     </div>
                 </div>
@@ -278,11 +278,11 @@
                 <h3>Monastery</h3>
                 <div class="dual-image-container">
                     <div class="img-box">
-                        <img src="./original_monastery.jpg" alt="Original Monastery">
+                        <img src="media/original_monastery.jpg" alt="Original Monastery">
                         <div class="img-label">Original</div>
                     </div>
                     <div class="img-box">
-                        <img src="./aligned_monastery.jpg" alt="Aligned Monastery">
+                        <img src="media/aligned_monastery.jpg" alt="Aligned Monastery">
                         <div class="img-label">Aligned</div>
                     </div>
                 </div>
@@ -300,11 +300,11 @@
                 <h3>Tobolsk</h3>
                 <div class="dual-image-container">
                     <div class="img-box">
-                        <img src="./original_tobolsk.jpg" alt="Original Tobolsk">
+                        <img src="media/original_tobolsk.jpg" alt="Original Tobolsk">
                         <div class="img-label">Original</div>
                     </div>
                     <div class="img-box">
-                        <img src="./aligned_tobolsk.jpg" alt="Aligned Tobolsk">
+                        <img src="media/aligned_tobolsk.jpg" alt="Aligned Tobolsk">
                         <div class="img-label">Aligned</div>
                     </div>
                 </div>
@@ -324,14 +324,15 @@
             <span class="card-tag">Part 2</span>
             <h2>Multi-Scale Pyramid Alignment (TIFF)</h2>
             <p>
-                For high-resolution TIFF images, exhaustive searching is computationally prohibitively expensive. A recursive image pyramid downsamples images by factors of two, estimating coarse displacements at lower resolutions before refining offsets sequentially at higher resolutions.
+                For high-resolution TIFF images, exhaustive searching is computationally expensive. For these larger, high-resolution .tif images, I implemented the multi-scale pyramid alignment, as it ensures a faster, more efficient, and reliable search. The reason for using this method is that this strategy downsamples the image into a pyramid, aligning at the places where displacements are small relative to image size, and then refining as I move back up to higher resolutions.
+
             </p>
         </div>
 
-        <!-- Bells & Whistles -->
+        <!-- Part 3: Additional Images -->
         <div class="card">
-            <span class="card-tag">Extra Credit</span>
-            <h2>Bells & Whistles</h2>
+            <span class="card-tag">Extra Images</span>
+            <h2>Additional Results</h2>
             <p>
                 Exploration of automated features including Sobel edge detection alignment, automatic contrast scaling, white balance adjustment, and edge border cropping.
             </p>
