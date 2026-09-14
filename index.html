@@ -1,348 +1,151 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My CS180 Portfolio</title>
-    <style>
-        :root {
-            --body-bg: #eef2f5;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --card-bg: #ffffff;
-            --card-border: #e2e8f0;
-            --btn-border: #94a3b8;
-            --accent-green: #10b981;
-        }
+<style>
+    /* Side-by-Side Comparison Layout */
+    .comparison-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--body-bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0 0 80px 0;
-            line-height: 1.6;
-        }
+    .comparison-card h3 {
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 18px;
+        font-size: 1.3rem;
+        color: #1e293b;
+    }
 
-        /* Hero Container & Vector Art */
-        .hero-section {
-            position: relative;
-            height: 380px;
-            background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .dual-image-container {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
 
-        .mountain-svg {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
+    .img-box {
+        flex: 1;
+        min-width: 250px;
+        text-align: center;
+    }
 
-        /* Top Nav Overlay */
-        .top-nav {
-            position: absolute;
-            top: 20px;
-            right: 24px;
-            z-index: 10;
-        }
+    .img-box img {
+        width: 100%;
+        max-width: 380px;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e1;
+    }
 
-        .contact-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            padding: 8px 18px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
-        }
+    .img-label {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 600;
+    }
 
-        .contact-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: #ffffff;
-        }
+    .offset-badge {
+        display: inline-flex;
+        gap: 16px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 16px;
+        margin-top: 16px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
 
-        /* Glass Floating Title Card */
-        .title-box {
-            position: relative;
-            z-index: 5;
-            background: rgba(30, 41, 59, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 
-                        0 0 30px rgba(16, 185, 129, 0.15);
-            border-radius: 20px;
-            padding: 40px 60px;
-            text-align: center;
-            max-width: 650px;
-            margin: 0 20px;
-        }
+    .offset-green { color: #16a34a; }
+    .offset-red { color: #dc2626; }
+    .badge-divider { color: #cbd5e1; }
+</style>
 
-        .title-box h1 {
-            color: #ffffff;
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            letter-spacing: -0.5px;
-        }
+<!-- Part 1: Single Scale -->
+<div class="card">
+    <span class="card-tag">Part 1</span>
+    <h2>Single-Scale Implementation (JPEG)</h2>
+    <p>
+        The initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>.
+    </p>
+    <p>
+        Alignment quality is evaluated using <strong>Normalized Cross-Correlation (NCC)</strong>, computed by vectorizing the channel slices and normalizing by their mean and standard deviation:
+    </p>
+    <p style="text-align: center; font-family: monospace;">
+        NCC(I₁, I₂) = ∑[(I₁(x,y) - μ₁)(I₂(x,y) - μ₂)] / √[∑(I₁(x,y) - μ₁)² ∑(I₂(x,y) - μ₂)²]
+    </p>
+    <p>
+        To prevent scanning artifacts, dark borders, and frame edges from skewing the score, a 15% margin around the outer edges is cropped before calculating NCC. The offset yielding the highest NCC score is selected to stack the channels back into an aligned RGB image. While this approach effectively aligns low-resolution JPEG images, searching a ±15 pixel window is insufficient for high-resolution TIFF files and scaling up the window size becomes computationally prohibitive.
+    </p>
 
-        .title-box p {
-            color: #cbd5e1;
-            font-size: 1.05rem;
-            margin: 0;
-            font-weight: 400;
-        }
+    <br>
 
-        /* Main Grid Content */
-        .container {
-            max-width: 1100px;
-            margin: 40px auto 0 auto;
-            padding: 0 20px;
-        }
-
-        .projects-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 2fr;
-            gap: 24px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 28px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .card-header-icon {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            margin-bottom: 12px;
-        }
-
-        .icon-box {
-            width: 44px;
-            height: 44px;
-            background: #f1f5f9;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            flex-shrink: 0;
-        }
-
-        .card h2 {
-            font-size: 1.35rem;
-            font-weight: 700;
-            margin: 0 0 8px 0;
-            color: var(--text-main);
-            line-height: 1.3;
-        }
-
-        .card-content {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .thumbnail-img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .card-ul {
-            margin: 0;
-            padding-left: 18px;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .card-ul li {
-            margin-bottom: 4px;
-        }
-
-        /* Button Styling */
-        .card-btn {
-            display: block;
-            width: 100%;
-            padding: 10px 0;
-            text-align: center;
-            background: #ffffff;
-            border: 1px solid var(--btn-border);
-            border-radius: 8px;
-            color: #334155;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-decoration: none;
-            box-sizing: border-box;
-            transition: all 0.2s ease;
-        }
-
-        .card-btn:hover {
-            background: #f8fafc;
-            border-color: #475569;
-            color: #0f172a;
-        }
-
-        /* Sidebar Card Center Alignment */
-        .concept-card {
-            text-align: center;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .concept-card p {
-            color: var(--text-muted);
-            font-weight: 500;
-            margin-top: 10px;
-        }
-
-        /* Animated Pulsing Constellation Effect */
-        @keyframes nodePulse {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.3); }
-        }
-
-        .pulse-node {
-            animation: nodePulse 3s infinite ease-in-out;
-            transform-origin: center;
-        }
-
-        .pulse-node:nth-child(2) { animation-delay: 1s; }
-        .pulse-node:nth-child(3) { animation-delay: 2s; }
-
-        @media (max-width: 900px) {
-            .projects-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Hero Header with Animated SVG Mountains -->
-    <header class="hero-section">
-        <div class="top-nav">
-            <a href="mailto:yourname@berkeley.edu" class="contact-btn">Contact Me</a>
-        </div>
-
-        <svg class="mountain-svg" viewBox="0 0 1440 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#334155"/>
-                    <stop offset="100%" stop-color="#1e293b"/>
-                </linearGradient>
-                <linearGradient id="mtnBack" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#475569"/>
-                    <stop offset="100%" stop-color="#334155"/>
-                </linearGradient>
-                <linearGradient id="mtnMid" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#64748b"/>
-                    <stop offset="100%" stop-color="#475569"/>
-                </linearGradient>
-                <linearGradient id="mtnFront" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#94a3b8"/>
-                    <stop offset="100%" stop-color="#64748b"/>
-                </linearGradient>
-            </defs>
-
-            <!-- Background Sky Dots -->
-            <circle cx="200" cy="60" r="1.5" fill="#ffffff" opacity="0.4"/>
-            <circle cx="450" cy="90" r="1" fill="#ffffff" opacity="0.3"/>
-            <circle cx="850" cy="50" r="2" fill="#ffffff" opacity="0.5"/>
-            <circle cx="1200" cy="80" r="1.5" fill="#ffffff" opacity="0.4"/>
-
-            <!-- Distant Mountains -->
-            <path d="M0 400 L0 180 L250 80 L500 220 L750 120 L1100 260 L1440 140 L1440 400 Z" fill="url(#mtnBack)"/>
-            
-            <!-- Midground Mountains -->
-            <path d="M0 400 L0 230 L320 120 L620 280 L920 160 L1250 300 L1440 210 L1440 400 Z" fill="url(#mtnMid)" opacity="0.8"/>
-
-            <!-- Foreground Faceted Peak -->
-            <path d="M0 400 L0 290 L220 190 L520 340 L820 200 L1180 370 L1440 260 L1440 400 Z" fill="url(#mtnFront)"/>
-
-            <!-- Green Glowing Constellation/Network Lines -->
-            <path d="M220 190 L520 120 L820 200 M520 120 L680 90 M820 200 L950 140" stroke="#10b981" stroke-width="1.5" opacity="0.5" fill="none"/>
-            <path d="M520 120 Q 670 40, 820 200" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6" fill="none"/>
-
-            <!-- Glowing Constellation Nodes -->
-            <circle class="pulse-node" cx="520" cy="120" r="4" fill="#10b981"/>
-            <circle class="pulse-node" cx="680" cy="90" r="3" fill="#34d399"/>
-            <circle class="pulse-node" cx="820" cy="200" r="4.5" fill="#10b981"/>
-        </svg>
-
-        <!-- Glass Box -->
-        <div class="title-box">
-            <h1>Welcome to My CS180 Portfolio!</h1>
-            <p>Introduction to Computer Vision & Computational Photography</p>
-        </div>
-    </header>
-
-    <!-- Main Section -->
-    <main class="container">
-        <div class="projects-grid">
-
-            <!-- Project 1 Card -->
-            <div class="card">
-                <div>
-                    <div class="card-header-icon">
-                        <div class="icon-box">🖼️</div>
-                        <h2>Project 1: Colorizing the Prokudin-Gorskii Collection</h2>
-                    </div>
-                    <div class="card-content">
-                        <img src="https://via.placeholder.com/100" alt="Preview" class="thumbnail-img">
-                        <ul class="card-ul">
-                            <li>Project Description & overview</li>
-                            <li>Part 1: Single-Scale search implementation</li>
-                            <li>Part 2: Multi-Scale Pyramid strategy</li>
-                            <li>Bells & Whistles</li>
-                        </ul>
-                    </div>
-                </div>
-                <a href="./1/index.html" class="card-btn">View Project 1 Details</a>
+    <!-- Cathedral -->
+    <div class="comparison-card">
+        <h3>Cathedral</h3>
+        <div class="dual-image-container">
+            <div class="img-box">
+                <img src="./original_cathedral.jpg" alt="Original Cathedral">
+                <div class="img-label">Original</div>
             </div>
-
-            <!-- Middle Concept Card -->
-            <div class="card concept-card">
-                <div>
-                    <div class="icon-box" style="margin: 0 auto;">⚙️</div>
-                    <p>Related Concepts & Theory</p>
-                </div>
+            <div class="img-box">
+                <img src="./aligned_cathedral.jpg" alt="Aligned Cathedral">
+                <div class="img-label">Aligned</div>
             </div>
-
-            <!-- Project 0 Card -->
-            <div class="card">
-                <div>
-                    <div class="card-header-icon">
-                        <div class="icon-box">💻</div>
-                        <h2>Project 0: Becoming Functional</h2>
-                    </div>
-                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px;">
-                        Setup your development environment, web page hosting, and initial image processing functions.
-                    </p>
-                </div>
-                <a href="./0/index.html" class="card-btn">View Project 0 Details</a>
-            </div>
-
         </div>
-    </main>
+        <div style="text-align: center;">
+            <div class="offset-badge">
+                <span class="offset-green">Green: (2, 5)</span>
+                <span class="badge-divider">|</span>
+                <span class="offset-red">Red: (3, 12)</span>
+            </div>
+        </div>
+    </div>
 
-</body>
-</html>
+    <!-- Monastery -->
+    <div class="comparison-card">
+        <h3>Monastery</h3>
+        <div class="dual-image-container">
+            <div class="img-box">
+                <img src="./original_monastery.jpg" alt="Original Monastery">
+                <div class="img-label">Original</div>
+            </div>
+            <div class="img-box">
+                <img src="./aligned_monastery.jpg" alt="Aligned Monastery">
+                <div class="img-label">Aligned</div>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <div class="offset-badge">
+                <span class="offset-green">Green: (2, -3)</span>
+                <span class="badge-divider">|</span>
+                <span class="offset-red">Red: (2, 3)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tobolsk -->
+    <div class="comparison-card">
+        <h3>Tobolsk</h3>
+        <div class="dual-image-container">
+            <div class="img-box">
+                <img src="./original_tobolsk.jpg" alt="Original Tobolsk">
+                <div class="img-label">Original</div>
+            </div>
+            <div class="img-box">
+                <img src="./aligned_tobolsk.jpg" alt="Aligned Tobolsk">
+                <div class="img-label">Aligned</div>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <div class="offset-badge">
+                <span class="offset-green">Green: (3, 3)</span>
+                <span class="badge-divider">|</span>
+                <span class="offset-red">Red: (3, 6)</span>
+            </div>
+        </div>
+    </div>
+
+</div>
