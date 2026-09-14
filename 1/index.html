@@ -237,7 +237,7 @@
             <span class="card-tag">Part 1</span>
             <h2>Single-Scale Implementation (JPEG)</h2>
             <p>
-                The initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>.
+                The initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>. All reported displacement vectors are formatted as (dx, dy) representing (horizontal shift, vertical shift)
             </p>
             <p>
                 Alignment quality is evaluated using <strong>Normalized Cross-Correlation (NCC)</strong>, computed by vectorizing the channel slices and normalizing by their mean and standard deviation:
