@@ -132,56 +132,85 @@
 
         p {
             color: #4b5563;
-            margin-bottom: 0;
+            margin-bottom: 12px;
             font-size: 1.05rem;
         }
 
-        h3 {
-            text-align: center;
-            margin-top: 20px;
-            margin-bottom: 5px;
-            color: #374151;
-            font-size: 1.2rem;
-        }
-
-        /* Image Display Grid */
-        .image-row {
-            display: flex;
-            gap: 24px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 25px;
-        }
-
-        .image-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
+        .formula-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
             padding: 12px;
             text-align: center;
+            font-family: monospace;
+            font-size: 0.95rem;
+            margin: 15px 0;
+            color: #1e293b;
+        }
+
+        /* Side-by-Side Comparison Layout */
+        .comparison-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .comparison-card h3 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 18px;
+            font-size: 1.3rem;
+            color: #1e293b;
+        }
+
+        .dual-image-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .img-box {
             flex: 1;
-            min-width: 260px;
-            transition: border-color 0.2s ease;
+            min-width: 250px;
+            text-align: center;
         }
 
-        .image-card:hover {
-            border-color: #cbd5e1;
-        }
-
-        .image-card img {
-            max-width: 100%;
+        .img-box img {
+            width: 100%;
+            max-width: 380px;
             height: auto;
             border-radius: 8px;
-            display: block;
-            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #cbd5e1;
         }
 
-        .caption {
+        .img-label {
+            margin-top: 8px;
             font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 10px;
-            font-weight: 500;
+            color: #64748b;
+            font-weight: 600;
         }
+
+        .offset-badge {
+            display: inline-flex;
+            gap: 16px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin-top: 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .offset-green { color: #16a34a; }
+        .offset-red { color: #dc2626; }
+        .badge-divider { color: #cbd5e1; }
     </style>
 </head>
 <body>
@@ -208,40 +237,86 @@
             <span class="card-tag">Part 1</span>
             <h2>Single-Scale Implementation (JPEG)</h2>
             <p>
-                The single-scale alignment implementation uses an exhaustive displacement search over a <code>[-15, 15]</code> pixel window in both $x$ and $y$ directions. Alignment performance is computed using Normalized Cross-Correlation (NCC) over interior pixels (cropping a 15% outer border) to eliminate border frame noise and scanning artifacts. Both Green and Red channels are aligned relative to the fixed Blue channel.
+                The initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>.
+            </p>
+            <p>
+                Alignment quality is evaluated using <strong>Normalized Cross-Correlation (NCC)</strong>, computed by vectorizing the channel slices and normalizing by their mean and standard deviation:
             </p>
 
-            <div class="image-row">
-                <!-- Cathedral -->
-                <div class="image-card">
-                    <img src="./aligned_cathedral.jpg" alt="Aligned Cathedral">
-                    <h3>Cathedral</h3>
-                    <div class="caption">
-                        <strong>Green Offset (dx, dy):</strong> (2, 5)<br>
-                        <strong>Red Offset (dx, dy):</strong> (3, 12)
+            <div class="formula-box">
+                NCC(I₁, I₂) = ∑[(I₁(x,y) - μ₁)(I₂(x,y) - μ₂)] / √[∑(I₁(x,y) - μ₁)² ∑(I₂(x,y) - μ₂)²]
+            </div>
+
+            <p>
+                To prevent scanning artifacts, dark borders, and frame edges from skewing the score, a 15% margin around the outer edges is cropped before calculating NCC. The offset yielding the highest NCC score is selected to stack the channels back into an aligned RGB image. While this approach effectively aligns low-resolution JPEG images, searching a ±15 pixel window is insufficient for high-resolution TIFF files and scaling up the window size becomes computationally prohibitive.
+            </p>
+
+            <!-- Cathedral -->
+            <div class="comparison-card">
+                <h3>Cathedral</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="./original_cathedral.jpg" alt="Original Cathedral">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="./aligned_cathedral.jpg" alt="Aligned Cathedral">
+                        <div class="img-label">Aligned</div>
                     </div>
                 </div>
-
-                <!-- Monastery -->
-                <div class="image-card">
-                    <img src="./aligned_monastery.jpg" alt="Aligned Monastery">
-                    <h3>Monastery</h3>
-                    <div class="caption">
-                        <strong>Green Offset (dx, dy):</strong> (2, -3)<br>
-                        <strong>Red Offset (dx, dy):</strong> (2, 3)
-                    </div>
-                </div>
-
-                <!-- Tobolsk -->
-                <div class="image-card">
-                    <img src="./aligned_tobolsk.jpg" alt="Aligned Tobolsk">
-                    <h3>Tobolsk</h3>
-                    <div class="caption">
-                        <strong>Green Offset (dx, dy):</strong> (3, 3)<br>
-                        <strong>Red Offset (dx, dy):</strong> (3, 6)
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (2, 5)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (3, 12)</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Monastery -->
+            <div class="comparison-card">
+                <h3>Monastery</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="./original_monastery.jpg" alt="Original Monastery">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="./aligned_monastery.jpg" alt="Aligned Monastery">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (2, -3)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (2, 3)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tobolsk -->
+            <div class="comparison-card">
+                <h3>Tobolsk</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="./original_tobolsk.jpg" alt="Original Tobolsk">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="./aligned_tobolsk.jpg" alt="Aligned Tobolsk">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (3, 3)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (3, 6)</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Part 2: Pyramid Alignment -->
