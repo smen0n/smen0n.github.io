@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS180 Project 1: Images of the Russian Empire </title>
+    <title>CS180 Project 1: Images of the Russian Empire</title>
     <style>
         :root {
             --bg-color: #f4f6f9;
@@ -98,7 +98,6 @@
             box-shadow: var(--shadow-hover);
         }
 
-        /* Gradient Accent Bar for featured card */
         .card.accent::before {
             content: '';
             position: absolute;
@@ -139,7 +138,8 @@
 
         h3 {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 20px;
+            margin-bottom: 5px;
             color: #374151;
             font-size: 1.2rem;
         }
@@ -188,18 +188,18 @@
 
     <header>
         <a href="../index.html" class="back-btn">&larr; Back to Portfolio</a>
-        <h1>CS180 Project 1: Images of the Russian Empire </h1>
+        <h1>CS180 Project 1: Images of the Russian Empire</h1>
         <p>Colorizing the Prokudin-Gorskii photo collection</p>
     </header>
 
     <main class="container">
 
-        <!-- Overview / Description -->
+        <!-- Overview -->
         <div class="card accent">
             <span class="card-tag">Overview</span>
             <h2>Project Description</h2>
             <p>
-                The goal of this project was to reconstruct color photographs from digitized, already-taken RGB glass plate images taken by Sergei Mikhailovich Prokudin-Gorskii. Each glass plate in the image, separated into 3 separate parts, contains three grayscale images captured through blue, green, and red filters. I separated the three color channels, aligned them best as per the alignment score calculation, and combined them to reconstruct the original RGB image, producing color photographs for the images of early 20th-century Russia.
+                The goal of this project was to reconstruct color photographs from digitized RGB glass plate negatives taken by Sergei Mikhailovich Prokudin-Gorskii. Each glass plate contains three vertical grayscale exposures captured through blue, green, and red filters (in BGR order from top to bottom). By extracting these channel plates, determining the optimal spatial displacement offsets, and stacking them together, we automatically produce high-quality color images capturing early 20th-century Russia.
             </p>
         </div>
 
@@ -208,14 +208,38 @@
             <span class="card-tag">Part 1</span>
             <h2>Single-Scale Implementation (JPEG)</h2>
             <p>
-                Implementation using simple displacement search for smaller images. Describe your L2 / Normalized Cross-Correlation (NCC) scoring functions and your pixel window search strategy here.
+                The single-scale alignment implementation uses an exhaustive displacement search over a <code>[-15, 15]</code> pixel window in both $x$ and $y$ directions. Alignment performance is computed using Normalized Cross-Correlation (NCC) over interior pixels (cropping a 15% outer border) to eliminate border frame noise and scanning artifacts. Both Green and Red channels are aligned relative to the fixed Blue channel.
             </p>
-            
-            <h3>Cathedral Example</h3>
+
             <div class="image-row">
+                <!-- Cathedral -->
                 <div class="image-card">
-                    <img src="https://via.placeholder.com/300x400" alt="Result Image">
-                    <div class="caption">Offset: G (x, y), R (x, y)</div>
+                    <img src="./aligned_cathedral.jpg" alt="Aligned Cathedral">
+                    <h3>Cathedral</h3>
+                    <div class="caption">
+                        <strong>Green Offset (dx, dy):</strong> (2, 5)<br>
+                        <strong>Red Offset (dx, dy):</strong> (3, 12)
+                    </div>
+                </div>
+
+                <!-- Monastery -->
+                <div class="image-card">
+                    <img src="./aligned_monastery.jpg" alt="Aligned Monastery">
+                    <h3>Monastery</h3>
+                    <div class="caption">
+                        <strong>Green Offset (dx, dy):</strong> (2, -3)<br>
+                        <strong>Red Offset (dx, dy):</strong> (2, 3)
+                    </div>
+                </div>
+
+                <!-- Tobolsk -->
+                <div class="image-card">
+                    <img src="./aligned_tobolsk.jpg" alt="Aligned Tobolsk">
+                    <h3>Tobolsk</h3>
+                    <div class="caption">
+                        <strong>Green Offset (dx, dy):</strong> (3, 3)<br>
+                        <strong>Red Offset (dx, dy):</strong> (3, 6)
+                    </div>
                 </div>
             </div>
         </div>
@@ -225,7 +249,7 @@
             <span class="card-tag">Part 2</span>
             <h2>Multi-Scale Pyramid Alignment (TIFF)</h2>
             <p>
-                Describe your recursive coarse-to-fine image pyramid implementation designed to handle high-resolution TIFF files efficiently without memory bottlenecks.
+                For high-resolution TIFF images, exhaustive searching is computationally prohibitively expensive. A recursive image pyramid downsamples images by factors of two, estimating coarse displacements at lower resolutions before refining offsets sequentially at higher resolutions.
             </p>
         </div>
 
@@ -234,7 +258,7 @@
             <span class="card-tag">Extra Credit</span>
             <h2>Bells & Whistles</h2>
             <p>
-                Details on extra features implemented like automatic edge detection (Sobel gradients), automatic border cropping, dynamic range adjustment, or automatic white balance.
+                Exploration of automated features including Sobel edge detection alignment, automatic contrast scaling, white balance adjustment, and edge border cropping.
             </p>
         </div>
 
