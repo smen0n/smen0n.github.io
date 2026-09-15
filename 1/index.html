@@ -228,7 +228,7 @@
             <span class="card-tag">Overview</span>
             <h2>Project Description</h2>
             <p>
-                The goal of this project was to reconstruct color photographs from digitized RGB glass plate negatives taken by Sergei Mikhailovich Prokudin-Gorskii. Each glass plate contains three vertical grayscale exposures captured through blue, green, and red filters (in BGR order from top to bottom). By extracting these channel plates, determining the optimal spatial displacement offsets, and stacking them together, we automatically produce high-quality color images capturing early 20th-century Russia.
+                The goal of this project was to reconstruct color photographs from digitized RGB glass plate negatives taken by Sergei Mikhailovich Prokudin-Gorskii. Each glass plate contains three vertical grayscale exposures captured through blue, green, and red filters (in BGR order from top to bottom). By extracting these channel plates, determining the optimal spatial displacement offsets, and stacking them together, I automatically produced high-quality color images capturing early 20th-century Russia.
             </p>
         </div>
 
@@ -237,10 +237,10 @@
             <span class="card-tag">Part 1</span>
             <h2>Single-Scale Implementation (JPEG)</h2>
             <p>
-                The initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>. All reported displacement vectors are formatted as (dx, dy) representing (horizontal shift, vertical shift).
+                My initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>. All reported displacement vectors are formatted as (dx, dy) representing (horizontal shift, vertical shift).
             </p>
             <p>
-                Alignment quality is evaluated using <strong>Normalized Cross-Correlation (NCC)</strong>, computed by vectorizing the channel slices and normalizing by their mean and standard deviation:
+                I evaluated alignment quality using <strong>Normalized Cross-Correlation (NCC)</strong>, computed by vectorizing the channel slices and normalizing by their mean and standard deviation:
             </p>
 
             <div class="formula-box">
@@ -248,7 +248,7 @@
             </div>
 
             <p>
-                To prevent scanning artifacts, dark borders, and frame edges from skewing the score, a 15% margin around the outer edges is cropped before calculating NCC. The offset yielding the highest NCC score is selected to stack the channels back into an aligned RGB image. While this approach effectively aligns low-resolution JPEG images, searching a ±15 pixel window is insufficient for high-resolution TIFF files and scaling up the window size becomes computationally prohibitive.
+                To prevent scanning artifacts, dark borders, and frame edges from skewing the score, I cropped a 20% margin around the outer edges before calculating NCC. The offset yielding the highest NCC score is selected to stack the channels back into an aligned RGB image. While this approach effectively aligns low-resolution JPEG images, searching a ±15 pixel window is far too small for high-resolution TIFF files, and scaling up the search window size becomes computationally prohibitive.
             </p>
 
             <!-- Cathedral -->
@@ -324,7 +324,11 @@
             <span class="card-tag">Part 2</span>
             <h2>Multi-Scale Pyramid Alignment (TIFF)</h2>
             <p>
-                For high-resolution TIFF images, exhaustive searching is computationally expensive. For these larger, high-resolution .tif images, I implemented multi-scale pyramid alignment, as it ensures a faster, more efficient, and reliable search. This strategy downsamples the image recursively into a Gaussian pyramid, aligning at coarse scales where displacements are small relative to image size, scaling estimates up by a factor of 2 at each level, and refining the alignment using a narrow search window (e.g., ±2 pixels) as it ascends back up to full resolution.
+                For high-resolution TIFF images, exhaustive searching over large pixel windows is far too slow. I implemented a multi-scale image pyramid alignment algorithm to process these efficiently. The strategy recursively downsamples the image channel plates by factors of 2 until reaching a base resolution. At the coarsest level, it performs a coarse search over a <code>[-15, 15]</code> range. As the recursion unwinds back up to full resolution, it scales the estimated displacement vectors by 2 at each level, pre-shifts the image, and runs a fine-grained refinement search within a narrow window of <code>[-2, 2]</code> pixels.
+            </p>
+            <p>
+                <strong>Overcoming Brightness & Contrast Mismatches (The Emir Issue):</strong><br>
+                When testing this pyramid pipeline on <code>emir.tif</code>, standard NCC on raw pixel intensities completely failed and created a badly misaligned, ghosted result. Because the Emir wears a bright blue robe, the intensity values in the Blue base channel differ dramatically from the Green and Red channels. Standard NCC tries to force these conflicting brightness patterns into alignment. To fix this, I updated my search functions to pass channel plates through <strong>Sobel edge detection</strong> (`scipy.ndimage.sobel`) to extract magnitude maps. Calculating NCC over structural edge gradients instead of raw pixel values solved the contrast inversion issue and restored perfect alignment across all channels.
             </p>
 
             <!-- Harvesters -->
@@ -466,7 +470,7 @@
             <span class="card-tag">Extra Images</span>
             <h2>Additional Results</h2>
             <p>
-                Exploration of automated features including Sobel edge detection alignment, automatic contrast scaling, white balance adjustment, and edge border cropping.
+                To further refine my pipeline, I incorporated automatic Sobel edge detection to guarantee robust alignment across tricky high-contrast subjects, handled array mapping for matrix-rolling operations, and cropped border margins to remove frame artifacts before computing correlation scores.
             </p>
         </div>
 
