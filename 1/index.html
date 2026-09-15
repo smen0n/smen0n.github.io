@@ -237,7 +237,7 @@
             <span class="card-tag">Part 1</span>
             <h2>Single-Scale Implementation (JPEG)</h2>
             <p>
-                The initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>. All reported displacement vectors are formatted as (dx, dy) representing (horizontal shift, vertical shift)
+                The initial approach uses a single-scale exhaustive search to align the Green and Red channels against the fixed Blue base channel. For each channel, every displacement vector within a bounded search window of <code>[-15, 15]</code> pixels in both $x$ and $y$ directions is tested using <code>np.roll</code>. All reported displacement vectors are formatted as (dx, dy) representing (horizontal shift, vertical shift).
             </p>
             <p>
                 Alignment quality is evaluated using <strong>Normalized Cross-Correlation (NCC)</strong>, computed by vectorizing the channel slices and normalizing by their mean and standard deviation:
@@ -324,9 +324,141 @@
             <span class="card-tag">Part 2</span>
             <h2>Multi-Scale Pyramid Alignment (TIFF)</h2>
             <p>
-                For high-resolution TIFF images, exhaustive searching is computationally expensive. For these larger, high-resolution .tif images, I implemented the multi-scale pyramid alignment, as it ensures a faster, more efficient, and reliable search. The reason for using this method is that this strategy downsamples the image into a pyramid, aligning at the places where displacements are small relative to image size, and then refining as I move back up to higher resolutions.
-
+                For high-resolution TIFF images, exhaustive searching is computationally expensive. For these larger, high-resolution .tif images, I implemented multi-scale pyramid alignment, as it ensures a faster, more efficient, and reliable search. This strategy downsamples the image recursively into a Gaussian pyramid, aligning at coarse scales where displacements are small relative to image size, scaling estimates up by a factor of 2 at each level, and refining the alignment using a narrow search window (e.g., ±2 pixels) as it ascends back up to full resolution.
             </p>
+
+            <!-- Harvesters -->
+            <div class="comparison-card">
+                <h3>Harvesters</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="media/original_harvesters.jpg" alt="Original Harvesters">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="media/aligned_harvesters.jpg" alt="Aligned Harvesters">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (16, 59)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (13, 124)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Icon -->
+            <div class="comparison-card">
+                <h3>Icon</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="media/original_icon.jpg" alt="Original Icon">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="media/aligned_icon.jpg" alt="Aligned Icon">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (17, 41)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (23, 89)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lady -->
+            <div class="comparison-card">
+                <h3>Lady</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="media/original_lady.jpg" alt="Original Lady">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="media/aligned_lady.jpg" alt="Aligned Lady">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (9, 51)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (11, 115)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Self Portrait -->
+            <div class="comparison-card">
+                <h3>Self Portrait</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="media/original_self_portrait.jpg" alt="Original Self Portrait">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="media/aligned_self_portrait.jpg" alt="Aligned Self Portrait">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (29, 50)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (37, 176)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Three Generations -->
+            <div class="comparison-card">
+                <h3>Three Generations</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="media/original_three_generations.jpg" alt="Original Three Generations">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="media/aligned_three_generations.jpg" alt="Aligned Three Generations">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (14, 53)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (12, 112)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emir -->
+            <div class="comparison-card">
+                <h3>Emir</h3>
+                <div class="dual-image-container">
+                    <div class="img-box">
+                        <img src="media/original_emir.jpg" alt="Original Emir">
+                        <div class="img-label">Original</div>
+                    </div>
+                    <div class="img-box">
+                        <img src="media/aligned_emir.jpg" alt="Aligned Emir">
+                        <div class="img-label">Aligned</div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="offset-badge">
+                        <span class="offset-green">Green: (24, 49)</span>
+                        <span class="badge-divider">|</span>
+                        <span class="offset-red">Red: (40, 107)</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Part 3: Additional Images -->
