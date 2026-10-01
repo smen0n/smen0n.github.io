@@ -1220,6 +1220,22 @@ def build_laplacian_stack(gaussian_stack: list) -> list:
                 </div>
             </div>
         </div>
+    <!-- Conclusion / Key Takeaways -->
+        <div class="card">
+            <h2>Conclusion &amp; Key Takeaways</h2>
+            <p>
+                The most important insight I gained from this project is that almost all frequency-based image processing comes down to a single fundamental operation: blurring and subtracting. While image sharpening, hybrid images, and multiresolution blending appear distinct on the surface, seeing them through the lens of frequency decomposition reveals that they are all variations of the exact same principle. Sharpening adds back the high frequencies that blurring removes; hybrids combine the high frequencies isolated from one image with the low frequencies retained by another; and Laplacian stacks repeatedly apply this blur-and-subtract pipeline across multiple scales.
+            </p>
+            <p>
+                Beyond conceptualizing this unified framework, working directly with frequency bands transformed how I reason about parameters and visual perception. Instead of guessing $\sigma$ values, understanding that a Gaussian cutoff scales inversely with $\sigma$ ($\approx 0.19/\sigma$ cycles per pixel) allowed me to select parameters intentionally based on an image's structural content—such as realizing high-detail textures like fur or whiskers must serve as the high-frequency source because low-pass filtering strips them away completely.
+            </p>
+            <p>
+                I was also struck by practical nuances in the implementation: how convolution's associative property makes blurring and taking derivatives mathematically identical to a single Difference of Gaussians (DoG) filter (yielding identical results to machine precision $10^{-15}$), how critical boundary padding and alignment are to preventing edge artifacts, and how mask Gaussian stacks are essential for hiding seams in blending. Furthermore, I observed that color predominantly resides in low frequencies; color in high-frequency channels has a minimal visual impact, whereas in blending, color alignment between sources dictates whether the composition looks natural or mismatched.
+            </p>
+            <p>
+                Ultimately, isolating these spatial frequencies firsthand bridged the gap between lecture theory and hands-on practice, proving that complex visual effects rely on the precise mathematical manipulation of underlying image signals.
+            </p>
+        </div>
 
     </main>
 
