@@ -406,182 +406,657 @@ def convolve2d_two_loops(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
 
             <p style="margin-top: 18px;"><strong>Selected Threshold Justification:</strong> The <strong>85th percentile threshold</strong> was chosen as the optimal choice. It successfully eliminates most high-frequency background noise in the grass field while maintaining sharp, continuous outlines for the subject, tripod, camera, and horizon. The 70th and 80th percentiles contain noticeable noise artifacts, whereas the 90th percentile is too aggressive and cuts off key structural details of the tripod and coat.</p>
         </div>
-<!-- Part 1.3 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS180: Project 2 - Fun with Filters and Frequencies!</title>
+    
+    <!-- KaTeX for rendering LaTeX inline equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body);"></script>
+
+    <style>
+        :root {
+            --body-bg: #eef2f5;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --btn-border: #cbd5e1;
+            --accent-green: #10b981;
+            --code-bg: #0f172a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0 0 80px 0;
+            line-height: 1.6;
+        }
+
+        /* Hero Header */
+        .hero-section {
+            position: relative;
+            height: 380px;
+            background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mountain-svg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .top-nav {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            z-index: 10;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 8px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: #ffffff;
+        }
+
+        /* Glass Title Box */
+        .title-box {
+            position: relative;
+            z-index: 5;
+            background: rgba(30, 41, 59, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 
+                        0 0 30px rgba(16, 185, 129, 0.15);
+            border-radius: 20px;
+            padding: 35px 50px;
+            text-align: center;
+            max-width: 750px;
+            margin: 0 20px;
+        }
+
+        .title-box h1 {
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .title-box p {
+            color: #cbd5e1;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* Main Container Layout */
+        .container {
+            max-width: 1000px;
+            margin: 40px auto 0 auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--card-border);
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 32px;
+        }
+
+        .card h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-top: 0;
+            color: var(--text-main);
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 24px;
+            color: #334155;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: #e2e8f0;
+            padding: 18px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        /* Grid for Image Comparison */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .image-card {
+            background: #f8fafc;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+            text-align: center;
+            padding: 12px;
+        }
+
+        .image-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .image-card p {
+            margin: 10px 0 4px 0;
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: var(--text-main);
+        }
+
+        .image-card span {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        /* Constellation Animation */
+        @keyframes nodePulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.3); }
+        }
+
+        .pulse-node {
+            animation: nodePulse 3s infinite ease-in-out;
+            transform-origin: center;
+        }
+        .pulse-node:nth-child(2) { animation-delay: 1s; }
+        .pulse-node:nth-child(3) { animation-delay: 2s; }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Header -->
+    <header class="hero-section">
+        <div class="top-nav">
+            <a href="../index.html" class="back-btn">&larr; Main Portfolio</a>
+        </div>
+
+        <svg class="mountain-svg" viewBox="0 0 1440 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="mtnBack" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#475569"/>
+                    <stop offset="100%" stop-color="#334155"/>
+                </linearGradient>
+                <linearGradient id="mtnMid" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#64748b"/>
+                    <stop offset="100%" stop-color="#475569"/>
+                </linearGradient>
+                <linearGradient id="mtnFront" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#94a3b8"/>
+                    <stop offset="100%" stop-color="#64748b"/>
+                </linearGradient>
+            </defs>
+
+            <circle cx="200" cy="60" r="1.5" fill="#ffffff" opacity="0.4"/>
+            <circle cx="450" cy="90" r="1" fill="#ffffff" opacity="0.3"/>
+            <circle cx="850" cy="50" r="2" fill="#ffffff" opacity="0.5"/>
+            <circle cx="1200" cy="80" r="1.5" fill="#ffffff" opacity="0.4"/>
+
+            <path d="M0 400 L0 180 L250 80 L500 220 L750 120 L1100 260 L1440 140 L1440 400 Z" fill="url(#mtnBack)"/>
+            <path d="M0 400 L0 230 L320 120 L620 280 L920 160 L1250 300 L1440 210 L1440 400 Z" fill="url(#mtnMid)" opacity="0.8"/>
+            <path d="M0 400 L0 290 L220 190 L520 340 L820 200 L1180 370 L1440 260 L1440 400 Z" fill="url(#mtnFront)"/>
+
+            <path d="M220 190 L520 120 L820 200 M520 120 L680 90 M820 200 L950 140" stroke="#10b981" stroke-width="1.5" opacity="0.5" fill="none"/>
+            <path d="M520 120 Q 670 40, 820 200" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6" fill="none"/>
+
+            <circle class="pulse-node" cx="520" cy="120" r="4" fill="#10b981"/>
+            <circle class="pulse-node" cx="680" cy="90" r="3" fill="#34d399"/>
+            <circle class="pulse-node" cx="820" cy="200" r="4.5" fill="#10b981"/>
+        </svg>
+
+        <div class="title-box">
+            <h1>Project 2: Fun with Filters and Frequencies!</h1>
+            <p>2D Convolutions, Derivative Filters, Sharpening, Hybrid Images, and Multiresolution Blending</p>
+        </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="container">
+        
+        <!-- SECTION 1 -->
+        <h2 class="section-title">Part 1: Fun with Filters</h2>
+
+        <!-- Part 1.1 -->
         <div class="card">
-            <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
-            <p>
-                To eliminate high-frequency noise (such as grass texture) prior to edge detection, we apply a Gaussian filter $G$[cite: 1]. 
-                By the associative property of convolution, $(I * G) * D = I * (G * D)$, smoothing then differentiating is mathematically identical 
-                to convolving the image with a single pre-computed Derivative of Gaussian (DoG) filter[cite: 1, 2].
-            </p>
+            <h2>Part 1.1: Convolutions from Scratch!</h2>
+            <p>Implementation of 2D convolutions using zero padding: comparing a 4-loop method with a vectorized 2-loop method.</p>
 
             <h3>Implementation</h3>
-<pre><code>def create_2d_gaussian(size: int, sigma: float) -> np.ndarray:
-    gaussian_1d = cv2.getGaussianKernel(size, sigma)
+<pre><code>def apply_zero_padding(image: np.ndarray, pad_height: int, pad_width: int) -> np.ndarray:
+    padded_image = np.pad(image, pad_width=((pad_height, pad_height), (pad_width, pad_width)), mode='constant', constant_values=0)
+    return padded_image
+
+def prepare_kernel_and_padding(kernel: np.ndarray):
+    flipped_kernel = np.flipud(np.fliplr(kernel))
+    pad_height = kernel.shape[0] // 2
+    pad_width = kernel.shape[1] // 2
+    return flipped_kernel, pad_height, pad_width
+
+def convolve2d_four_loops(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    image_height, image_width = image.shape
+    flipped_kernel, pad_height, pad_width = prepare_kernel_and_padding(kernel)
+    padded_image = apply_zero_padding(image, pad_height, pad_width)
+    output_image = np.zeros((image_height, image_width), dtype=np.float64)
+    for row_idx in range(image_height):
+        for col_idx in range(image_width):
+            pixel_sum = 0.0
+            for kernel_row in range(flipped_kernel.shape[0]):
+                for kernel_col in range(flipped_kernel.shape[1]):
+                    image_pixel = padded_image[row_idx + kernel_row, col_idx + kernel_col]
+                    kernel_weight = flipped_kernel[kernel_row, kernel_col]
+                    pixel_sum += image_pixel * kernel_weight
+            output_image[row_idx, col_idx] = pixel_sum
+    return output_image
+
+def convolve2d_two_loops(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    image_height, image_width = image.shape
+    flipped_kernel, pad_height, pad_width = prepare_kernel_and_padding(kernel)
+    kernel_height, kernel_width = flipped_kernel.shape
+    padded_image = apply_zero_padding(image, pad_height, pad_width)
+    output_image = np.zeros((image_height, image_width), dtype=np.float64)
+    for row_idx in range(image_height):
+        for col_idx in range(image_width):
+            image_patch = padded_image[row_idx : row_idx + kernel_height, col_idx : col_idx + kernel_width]
+            output_image[row_idx, col_idx] = np.sum(image_patch * flipped_kernel)
+    return output_image</code></pre>
+        </div>
+
+        <!-- Part 1.2 -->
+        <div class="card">
+            <h2>Part 1.2: Finite Difference Operator</h2>
+            <p>To detect edges, we first compute the partial derivatives of the original Cameraman image in the horizontal ($x$) and vertical ($y$) directions using finite difference operators $D_x = [1, 0, -1]$ and $D_y = [1, 0, -1]^\top$. Combining these partial derivatives gives the <strong>gradient magnitude</strong>: $\text{Magnitude} = \sqrt{D_x^2 + D_y^2}$. Finally, thresholding the gradient magnitude produces a binarized edge map.</p>
+
+            <h3>Implementation</h3>
+<pre><code>def run_part_1_2(output_dir: str):
+    img_path = "cameraman.png"
+    cameraman_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    if cameraman_img is None:
+        raise FileNotFoundError(f"Could not find '{img_path}'.")
+    cameraman = cameraman_img.astype(np.float64) / 255.0
+    
+    # Define finite difference operators
+    Dx = np.array([[1, 0, -1]], dtype=np.float64)
+    Dy = np.array([[1], [0], [-1]], dtype=np.float64)
+    
+    # Compute partial derivatives via 2D convolution
+    dx_img = scipy.signal.convolve2d(cameraman, Dx, mode='same', boundary='symm')
+    dy_img = scipy.signal.convolve2d(cameraman, Dy, mode='same', boundary='symm')
+    
+    # Calculate gradient magnitude
+    grad_mag = np.sqrt(dx_img**2 + dy_img**2)
+    
+    save_and_display(cameraman, os.path.join(output_dir, "13_cameraman_original.png"), "Original Cameraman")
+    save_and_display(dx_img, os.path.join(output_dir, "14_cameraman_dx.png"), "Dx Derivative")
+    save_and_display(dy_img, os.path.join(output_dir, "15_cameraman_dy.png"), "Dy Derivative")
+    save_and_display(grad_mag, os.path.join(output_dir, "16_cameraman_grad_mag.png"), "Gradient Magnitude")
+
+    # Evaluate multiple percentile-based thresholds
+    p70_val = np.percentile(grad_mag, 70)
+    p80_val = np.percentile(grad_mag, 80)
+    p85_val = np.percentile(grad_mag, 85)
+    p90_val = np.percentile(grad_mag, 90)
+
+    threshold_configs = [
+        (p70_val, "17_thresh_70th.png", f"Threshold 1: 70th Percentile ({p70_val:.4f})"),
+        (p80_val, "18_thresh_80th.png", f"Threshold 2: 80th Percentile ({p80_val:.4f})"),
+        (p85_val, "19_thresh_85th.png", f"Threshold 3: 85th Percentile ({p85_val:.4f}) - Selected"),
+        (p90_val, "20_thresh_90th.png", f"Threshold 4: 90th Percentile ({p90_val:.4f})")
+    ]
+
+    for thresh_val, filename, title_text in threshold_configs:
+        binarized = (grad_mag > thresh_val).astype(np.float32)
+        save_and_display(binarized, os.path.join(output_dir, filename), title_text)</code></pre>
+
+            <h3>Original Image, Partial Derivatives & Gradient Magnitude</h3>
+            <p>The $D_x$ filter highlights vertical edges (changes across columns), while $D_y$ highlights horizontal edges (changes across rows). Combining them yields the orientation-invariant gradient magnitude map.</p>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="13_cameraman_original.png" alt="Original Cameraman">
+                    <p>Original Image</p>
+                    <span>Cameraman input</span>
+                </div>
+                <div class="image-card">
+                    <img src="14_cameraman_dx.png" alt="Dx Derivative">
+                    <p>D_x Derivative</p>
+                    <span>Horizontal gradient (vertical edges)</span>
+                </div>
+                <div class="image-card">
+                    <img src="15_cameraman_dy.png" alt="Dy Derivative">
+                    <p>D_y Derivative</p>
+                    <span>Vertical gradient (horizontal edges)</span>
+                </div>
+                <div class="image-card">
+                    <img src="16_cameraman_grad_mag.png" alt="Gradient Magnitude">
+                    <p>Gradient Magnitude</p>
+                    <span>$\sqrt{D_x^2 + D_y^2}$</span>
+                </div>
+            </div>
+
+            <h3>Threshold Selection & Analysis</h3>
+            <p>Finding the right threshold is a trade-off between suppressing high-frequency background noise (such as grass texture) and preserving structural edges (like the camera body, tripod legs, and skyline). Four percentile-based thresholds were tested:</p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="17_thresh_70th.png" alt="70th Percentile Threshold">
+                    <p>70th Percentile</p>
+                    <span>Too Low: Captures excessive noise in the grass</span>
+                </div>
+                <div class="image-card">
+                    <img src="18_thresh_80th.png" alt="80th Percentile Threshold">
+                    <p>80th Percentile</p>
+                    <span>Better: Retains main contours but still shows noise</span>
+                </div>
+                <div class="image-card">
+                    <img src="19_thresh_85th.png" alt="85th Percentile Threshold">
+                    <p>85th Percentile (Selected)</p>
+                    <span>Optimal: Balanced noise reduction & edge detail</span>
+                </div>
+                <div class="image-card">
+                    <img src="20_thresh_90th.png" alt="90th Percentile Threshold">
+                    <p>90th Percentile</p>
+                    <span>Too High: Loses faint structural lines & tripod legs</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 18px;"><strong>Selected Threshold Justification:</strong> The <strong>85th percentile threshold</strong> was chosen as the optimal choice. It successfully eliminates most high-frequency background noise in the grass field while maintaining sharp, continuous outlines for the subject, tripod, camera, and horizon. The 70th and 80th percentiles contain noticeable noise artifacts, whereas the 90th percentile is too aggressive and cuts off key structural details of the tripod and coat.</p>
+        </div>
+
+        <!-- Part 1.3 -->
+        <div class="card">
+            <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
+            <p>Comparing two methods: (1) smoothing followed by finite difference derivative, vs. (2) convolving the image with pre-computed Derivative of Gaussian (DoG) filters.</p>
+
+            <h3>Implementation</h3>
+<pre><code>def create_2d_gaussian(kernel_size: int, sigma: float) -> np.ndarray:
+    gaussian_1d = cv2.getGaussianKernel(kernel_size, sigma)
     gaussian_2d = np.outer(gaussian_1d, gaussian_1d.T)
     return gaussian_2d
 
-def run_part_1_3(image_path: str, output_dir: str):
-    # Load input image
-    im = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE).astype(np.float64) / 255.0
-
-    # 1. Create Gaussian Filter (15x15, sigma=2.0)
-    gaussian_filter = create_2d_gaussian(15, 2.0)
-
-    # 2. Method 1: Gaussian Smoothing then Finite Differences
-    im_smoothed = scipy.signal.convolve2d(im, gaussian_filter, mode='same', boundary='symm')
+def run_part_1_3(output_dir: str):
+    img_path = "cameraman.png"
+    cameraman = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE).astype(np.float64) / 255.0
+    
+    gaussian_kernel = create_2d_gaussian(15, 2.0)
     Dx = np.array([[1, 0, -1]], dtype=np.float64)
     Dy = np.array([[1], [0], [-1]], dtype=np.float64)
 
-    dx_smoothed = scipy.signal.convolve2d(im_smoothed, Dx, mode='same', boundary='symm')
-    dy_smoothed = scipy.signal.convolve2d(im_smoothed, Dy, mode='same', boundary='symm')
-    grad_mag_smoothed = np.sqrt(dx_smoothed**2 + dy_smoothed**2)
+    # Method 1: Smooth then Derivative
+    smoothed_img = scipy.signal.convolve2d(cameraman, gaussian_kernel, mode='same', boundary='fill', fillvalue=0)
+    dx_method1 = scipy.signal.convolve2d(smoothed_img, Dx, mode='same', boundary='fill', fillvalue=0)
+    dy_method1 = scipy.signal.convolve2d(smoothed_img, Dy, mode='same', boundary='fill', fillvalue=0)
+    grad_mag_method1 = np.sqrt(dx_method1**2 + dy_method1**2)
 
-    # 3. Method 2: Derivative of Gaussian (DoG) Filters directly
-    dog_x_filter = scipy.signal.convolve2d(gaussian_filter, Dx, mode='full')
-    dog_y_filter = scipy.signal.convolve2d(gaussian_filter, Dy, mode='full')
+    # Method 2: Derivative of Gaussian Filters
+    DoG_x = scipy.signal.convolve2d(gaussian_kernel, Dx, mode='full')
+    DoG_y = scipy.signal.convolve2d(gaussian_kernel, Dy, mode='full')
+    dx_method2 = scipy.signal.convolve2d(cameraman, DoG_x, mode='same', boundary='fill', fillvalue=0)
+    dy_method2 = scipy.signal.convolve2d(cameraman, DoG_y, mode='same', boundary='fill', fillvalue=0)
+    grad_mag_method2 = np.sqrt(dx_method2**2 + dy_method2**2)
 
-    dx_dog = scipy.signal.convolve2d(im, dog_x_filter, mode='same', boundary='symm')
-    dy_dog = scipy.signal.convolve2d(im, dog_y_filter, mode='same', boundary='symm')
-    grad_mag_dog = np.sqrt(dx_dog**2 + dy_dog**2)
-
-    # Thresholding selected at 0.07
     threshold = 0.07
-    binarized_smoothed = (grad_mag_smoothed > threshold).astype(np.float32)
-    binarized_dog = (grad_mag_dog > threshold).astype(np.float32)
+    binarized_edges_method1 = (grad_mag_method1 > threshold).astype(np.float32)
+    binarized_edges_method2 = (grad_mag_method2 > threshold).astype(np.float32)</code></pre>
 
-    # Verification of numerical equality
-    diff_dx = np.max(np.abs(dx_smoothed - dx_dog))
-    diff_dy = np.max(np.abs(dy_smoothed - dy_dog))
-    print(f"Max difference Dx: {diff_dx:.2e}, Dy: {diff_dy:.2e}")
-</code></pre>
-
-            <h3>1. Gaussian Filter & Smoothing</h3>
-            <p>
-                A 2D Gaussian filter ($15 \times 15, \sigma = 2.0$) is created using the outer product of a 1D Gaussian kernel[cite: 1, 2]. 
-                Smoothing suppresses grass texture and fine noise, leaving wider and cleaner outlines[cite: 1].
-            </p>
+            <h3>Method Comparison</h3>
             <div class="image-grid">
                 <div class="image-card">
-                    <img src="21_gaussian_kernel.png" alt="2D Gaussian Filter">
-                    <p>2D Gaussian Filter</p>
-                    <span>15×15 kernel, σ = 2.0</span>
+                    <img src="21_gaussian_kernel.png" alt="Gaussian Kernel">
+                    <p>Gaussian Kernel</p>
+                    <span>15x15, σ=2.0</span>
                 </div>
                 <div class="image-card">
-                    <img src="22_cameraman_smoothed.png" alt="Cameraman Blurred">
-                    <p>Blurred Image</p>
-                    <span>Original ⊗ Gaussian filter</span>
+                    <img src="22_cameraman_smoothed.png" alt="Smoothed Cameraman">
+                    <p>Smoothed Image</p>
+                    <span>Low-pass Filtered</span>
+                </div>
+                <div class="image-card">
+                    <img src="27_dog_x_kernel.png" alt="DoG X Kernel">
+                    <p>DoG X Kernel</p>
+                    <span>G ⊗ Dx</span>
+                </div>
+                <div class="image-card">
+                    <img src="28_dog_y_kernel.png" alt="DoG Y Kernel">
+                    <p>DoG Y Kernel</p>
+                    <span>G ⊗ Dy</span>
                 </div>
             </div>
 
-            <h3>2. Method 1: Gaussian Smoothing + Finite Differences</h3>
-            <p>
-                First, the image is blurred with the Gaussian filter, and then partial derivatives $D_x$ and $D_y$ are calculated[cite: 1, 2]. 
-                Applying a threshold of 0.07 keeps the key structural outlines while suppressing texture noise[cite: 1].
-            </p>
             <div class="image-grid">
                 <div class="image-card">
-                    <img src="23_smoothed_dx.png" alt="Dx After Gaussian Smoothing">
-                    <p>Smoothed D_x</p>
-                    <span>Horizontal derivative after smoothing</span>
+                    <img src="25_method1_grad_mag.png" alt="Method 1 Gradient">
+                    <p>Method 1 Gradient</p>
+                    <span>Smooth → Diff</span>
                 </div>
                 <div class="image-card">
-                    <img src="24_smoothed_dy.png" alt="Dy After Gaussian Smoothing">
-                    <p>Smoothed D_y</p>
-                    <span>Vertical derivative after smoothing</span>
+                    <img src="26_method1_binarized.png" alt="Method 1 Binarized">
+                    <p>Method 1 Edges</p>
+                    <span>Thresholded</span>
                 </div>
                 <div class="image-card">
-                    <img src="25_method1_grad_mag.png" alt="Smoothed Gradient Magnitude">
-                    <p>Smoothed Gradient Magnitude</p>
-                    <span>$\sqrt{D_x^2 + D_y^2}$</span>
+                    <img src="29_method2_dx.png" alt="Method 2 Dx">
+                    <p>Method 2 Dx</p>
+                    <span>DoG_x Convolved</span>
                 </div>
                 <div class="image-card">
-                    <img src="26_method1_binarized.png" alt="Threshold 0.07">
-                    <p>Thresholded Edges (0.07)</p>
-                    <span>Selected threshold</span>
-                </div>
-            </div>
-
-            <h3>3. Method 2: Derivative of Gaussian (DoG) Filters</h3>
-            <p>
-                We pre-compute DoG filters ($G * D_x$ and $G * D_y$) using full convolution[cite: 1, 2]. 
-                Convolving the image directly with these single filters accomplishes blurring and differentiation in one pass[cite: 1, 2].
-            </p>
-            <div class="image-grid">
-                <div class="image-card">
-                    <img src="27_dog_x_kernel.png" alt="DoG X Filter">
-                    <p>DoG X Filter</p>
-                    <span>Gaussian ⊗ [[1, 0, -1]]</span>
-                </div>
-                <div class="image-card">
-                    <img src="28_dog_y_kernel.png" alt="DoG Y Filter">
-                    <p>DoG Y Filter</p>
-                    <span>Gaussian ⊗ [[1], [0], [-1]]</span>
-                </div>
-                <div class="image-card">
-                    <img src="29_method2_dx.png" alt="Dx Using DoG Filter">
-                    <p>D_x Using DoG</p>
-
-                    <span>Single-pass convolution</span>
-                </div>
-                <div class="image-card">
-                    <img src="30_method2_dy.png" alt="Dy Using DoG Filter">
-                    <p>D_y Using DoG</p>
-                    <span>Single-pass convolution</span>
-                </div>
-            </div>
-
-            <h3>4. Verification & Comparison</h3>
-            <p>
-                The maximum difference between the two approaches is less than $1 \times 10^{-6}$ across the entire image[cite: 1, 2]. 
-                This confirms that both methods yield identical results to numerical precision, while the DoG approach offers better computational efficiency by reducing the required operations from two 2D convolutions per direction to just one[cite: 1, 2].
-            </p>
-
-            <h3>5. Application: Taj Mahal Sharpening Analysis</h3>
-            <p>
-                Below is the unsharp masking progression on the Taj Mahal image, isolating high frequencies ($I - G * I$) and scaling them by $\alpha$[cite: 1].
-            </p>
-            <div class="image-grid">
-                <div class="image-card">
-                    <img src="32_taj_01_original.png" alt="Taj Original">
-                    <p>Taj Mahal Original</p>
-                    <span>Input image</span>
-                </div>
-                <div class="image-card">
-                    <img src="32_taj_02_blurred.png" alt="Taj Blurred">
-                    <p>Taj Blurred</p>
-                    <span>Gaussian blurred</span>
-                </div>
-                <div class="image-card">
-                    <img src="32_taj_03_high_freq.png" alt="Taj High Frequencies">
-                    <p>High Frequencies</p>
-                    <span>Original - Blurred</span>
-                </div>
-                <div class="image-card">
-                    <img src="32_taj_04_sharp_alpha_0.5.png" alt="Sharpened alpha=0.5">
-                    <p>Sharpened ($\alpha=0.5$)</p>
-                    <span>Subtle sharpening</span>
-                </div>
-            </div>
-            <div class="image-grid">
-                <div class="image-card">
-                    <img src="32_taj_05_sharp_alpha_1.0.png" alt="Sharpened alpha=1.0">
-                    <p>Sharpened ($\alpha=1.0$)</p>
-                    <span>Balanced enhancement</span>
-                </div>
-                <div class="image-card">
-                    <img src="32_taj_06_sharp_alpha_2.0.png" alt="Sharpened alpha=2.0">
-                    <p>Sharpened ($\alpha=2.0$)</p>
-                    <span>Pronounced edges</span>
-                </div>
-                <div class="image-card">
-                    <img src="32_taj_07_sharp_alpha_4.0.png" alt="Sharpened alpha=4.0">
-                    <p>Sharpened ($\alpha=4.0$)</p>
-                    <span>High contrast / over-sharpened</span>
+                    <img src="31_dog_binarized.png" alt="Method 2 Binarized">
+                    <p>Method 2 Edges</p>
+                    <span>Thresholded</span>
                 </div>
             </div>
         </div>
- 
+
+        <!-- SECTION 2 -->
+        <h2 class="section-title">Part 2: Frequencies</h2>
+
+        <!-- Part 2.1 -->
+        <div class="card">
+            <h2>Part 2.1: Image Sharpening</h2>
+            <p>Using Unsharp Masking ($I_{sharp} = I + \alpha (I - G \otimes I)$) to boost high-frequency components.</p>
+
+            <h3>Implementation</h3>
+<pre><code>def unsharp_mask_single_kernel(img: np.ndarray, gaussian_kernel: np.ndarray, alpha: float) -> np.ndarray:
+    k_size = gaussian_kernel.shape[0]
+    e = np.zeros((k_size, k_size), dtype=np.float64)
+    e[k_size // 2, k_size // 2] = 1.0
+    unsharp_kernel = (1.0 + alpha) * e - alpha * gaussian_kernel
+    
+    if img.ndim == 3:
+        sharpened_channels = [scipy.signal.convolve2d(img[:, :, c], unsharp_kernel, mode='same', boundary='symm') for c in range(3)]
+        sharpened = np.stack(sharpened_channels, axis=2)
+    else:
+        sharpened = scipy.signal.convolve2d(img, unsharp_kernel, mode='same', boundary='symm')
+    return np.clip(sharpened, 0.0, 1.0)</code></pre>
+        </div>
+
+        <!-- Part 2.2 -->
+        <div class="card">
+            <h2>Part 2.2: Hybrid Images</h2>
+            <p>Combining high-pass filtered and low-pass filtered images to create optical illusions that change perception with distance.</p>
+
+            <h3>Implementation</h3>
+<pre><code>def process_hybrid_pair(img1_high_path: str, img2_low_path: str, sigma_high: float, sigma_low: float, 
+                        prefix: str, output_dir: str, gain: float = 1.0, compute_fft: bool = False):
+    im1_high = plt.imread(img1_high_path).astype(np.float64) / 255.0
+    im2_low = plt.imread(img2_low_path).astype(np.float64) / 255.0
+
+    im1_aligned, im2_aligned = align_images(im1_high, im2_low)
+
+    low_freq = apply_gaussian_blur(im2_aligned, sigma_low)
+    im1_blurred = apply_gaussian_blur(im1_aligned, sigma_high)
+    high_freq = im1_aligned - im1_blurred
+
+    hybrid = np.clip(low_freq + gain * high_freq, 0.0, 1.0)
+    save_multiscale_pyramid(hybrid, os.path.join(output_dir, f"{prefix}_06_multiscale.png"))</code></pre>
+
+            <h3>Hybrid Results & Fourier Analysis</h3>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_01_high_input_aligned.png" alt="Nutmeg Aligned">
+                    <p>Nutmeg (High SF)</p>
+                    <span>High Pass Input</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_02_low_input_aligned.png" alt="Derek Aligned">
+                    <p>Derek (Low SF)</p>
+                    <span>Low Pass Input</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_05_hybrid.png" alt="Nutmeg-Derek Hybrid">
+                    <p>Hybrid Image</p>
+                    <span>Combined Output</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_11_fft_hybrid.png" alt="FFT Hybrid">
+                    <p>FFT Spectrum</p>
+                    <span>Hybrid Magnitude</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Part 2.3 & 2.4 -->
+        <div class="card">
+            <h2>Part 2.3 & 2.4: Gaussian & Laplacian Stacks & Multiresolution Blending</h2>
+            <p>Decomposing images into frequency bands using Laplacian stacks and blending them seamlessly with a Gaussian mask stack (e.g., the Oraple).</p>
+
+            <h3>Implementation</h3>
+<pre><code>def build_gaussian_stack(img: np.ndarray, num_levels: int = 5, initial_sigma: float = 2.0) -> list:
+    stack = [img.copy()]
+    for k in range(num_levels):
+        sigma = initial_sigma * (2 ** k)
+        k_size = int(6 * sigma + 1)
+        if k_size % 2 == 0:
+            k_size += 1
+        g1d = cv2.getGaussianKernel(k_size, sigma)
+        g2d = np.outer(g1d, g1d.T)
+
+        if img.ndim == 3:
+            blurred = np.zeros_like(img)
+            for c in range(3):
+                blurred[:, :, c] = scipy.signal.convolve2d(img[:, :, c], g2d, mode='same', boundary='symm')
+        else:
+            blurred = scipy.signal.convolve2d(img, g2d, mode='same', boundary='symm')
+
+        stack.append(np.clip(blurred, 0.0, 1.0))
+    return stack
+
+def build_laplacian_stack(gaussian_stack: list) -> list:
+    laplacian_stack = []
+    num_levels = len(gaussian_stack) - 1
+    for k in range(num_levels):
+        laplacian = gaussian_stack[k] - gaussian_stack[k + 1]
+        laplacian_stack.append(laplacian)
+    laplacian_stack.append(gaussian_stack[-1].copy())
+    return laplacian_stack
+
+def blend_laplacian_stacks(laplacian_A: list, laplacian_B: list, mask_gaussian_stack: list) -> tuple:
+    blended_stack = []
+    stack_A_levels = []
+    stack_B_levels = []
+
+    for l_a, l_b, g_m in zip(laplacian_A, laplacian_B, mask_gaussian_stack):
+        if l_a.ndim == 3 and g_m.ndim == 2:
+            g_m = np.repeat(g_m[:, :, np.newaxis], 3, axis=2)
+
+        level_A = l_a * g_m
+        level_B = l_b * (1.0 - g_m)
+        blended_level = level_A + level_B
+
+        stack_A_levels.append(level_A)
+        stack_B_levels.append(level_B)
+        blended_stack.append(blended_level)
+
+    return blended_stack, stack_A_levels, stack_B_levels
+
+def reconstruct_from_stack(laplacian_stack: list) -> np.ndarray:
+    reconstructed = np.sum(laplacian_stack, axis=0)
+    return np.clip(reconstructed, 0.0, 1.0)</code></pre>
+
+            <h3>Stack Visualizations</h3>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="38_apple_gaussian_stack.png" alt="Apple Gaussian Stack">
+                    <p>Apple - Gaussian Stack</p>
+                    <span>Multi-scale blur</span>
+                </div>
+                <div class="image-card">
+                    <img src="39_apple_laplacian_stack.png" alt="Apple Laplacian Stack">
+                    <p>Apple - Laplacian Stack</p>
+                    <span>Band-pass frequencies</span>
+                </div>
+            </div>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="40_orange_gaussian_stack.png" alt="Orange Gaussian Stack">
+                    <p>Orange - Gaussian Stack</p>
+                    <span>Multi-scale blur</span>
+                </div>
+                <div class="image-card">
+                    <img src="41_orange_laplacian_stack.png" alt="Orange Laplacian Stack">
+                    <p>Orange - Laplacian Stack</p>
+                    <span>Band-pass frequencies</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>
 
     </main>
 
