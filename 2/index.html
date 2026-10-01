@@ -406,106 +406,182 @@ def convolve2d_two_loops(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
 
             <p style="margin-top: 18px;"><strong>Selected Threshold Justification:</strong> The <strong>85th percentile threshold</strong> was chosen as the optimal choice. It successfully eliminates most high-frequency background noise in the grass field while maintaining sharp, continuous outlines for the subject, tripod, camera, and horizon. The 70th and 80th percentiles contain noticeable noise artifacts, whereas the 90th percentile is too aggressive and cuts off key structural details of the tripod and coat.</p>
         </div>
+<!-- Part 1.3 -->
+        <div class="card">
+            <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
+            <p>
+                To eliminate high-frequency noise (such as grass texture) prior to edge detection, we apply a Gaussian filter $G$[cite: 1]. 
+                By the associative property of convolution, $(I * G) * D = I * (G * D)$, smoothing then differentiating is mathematically identical 
+                to convolving the image with a single pre-computed Derivative of Gaussian (DoG) filter[cite: 1, 2].
+            </p>
 
-<!-- Part 1.3: Derivative of Gaussian (DoG) Filter -->
-<div class="card">
-    <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
-    <p>The results from the finite difference operators were quite noisy. To address this, we use a Gaussian filter $G$ for smoothing. First, we create a 2D Gaussian filter using <code>cv2.getGaussianKernel()</code> to create a 1D Gaussian, then take the outer product with its transpose to get a 2D Gaussian kernel. We then apply both Gaussian smoothing followed by finite differences, and create DoG filters by convolving the Gaussian directly with $D_x$ and $D_y$ operators.</p>
-
-    <h3>Mathematical Formulation & Associative Property</h3>
-    <p>Because convolution is associative, smoothing an image and then taking its derivative yields the exact same result as convolving the image with a pre-computed Derivative of Gaussian (DoG) filter:</p>
-    $$\left(I * G\right) * D_x = I * \left(G * D_x\right)$$
-    $$\left(I * G\right) * D_y = I * \left(G * D_y\right)$$
-
-    <h3>Implementation</h3>
+            <h3>Implementation</h3>
 <pre><code>def create_2d_gaussian(size: int, sigma: float) -> np.ndarray:
     gaussian_1d = cv2.getGaussianKernel(size, sigma)
     gaussian_2d = np.outer(gaussian_1d, gaussian_1d.T)
     return gaussian_2d
 
-# Create Gaussian filter (15x15, sigma=2.0)
-gaussian_filter = create_2d_gaussian(15, 2.0)
+def run_part_1_3(image_path: str, output_dir: str):
+    # Load input image
+    im = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE).astype(np.float64) / 255.0
 
-# Method 1: Gaussian smoothing then finite differences
-im_smoothed = conv2d(im, gaussian_filter, mode='same')
-dx_smoothed = finite_diff_x(im_smoothed)
-dy_smoothed = finite_diff_y(im_smoothed)
+    # 1. Create Gaussian Filter (15x15, sigma=2.0)
+    gaussian_filter = create_2d_gaussian(15, 2.0)
 
-# Method 2: Create DoG filters directly
-dog_x_filter = conv2d(gaussian_filter, [[1, 0, -1]], mode='full')
-dog_y_filter = conv2d(gaussian_filter, [[1], [0], [-1]], mode='full')
-dx_dog = conv2d(im, dog_x_filter, mode='same')
-dy_dog = conv2d(im, dog_y_filter, mode='same')</code></pre>
+    # 2. Method 1: Gaussian Smoothing then Finite Differences
+    im_smoothed = scipy.signal.convolve2d(im, gaussian_filter, mode='same', boundary='symm')
+    Dx = np.array([[1, 0, -1]], dtype=np.float64)
+    Dy = np.array([[1], [0], [-1]], dtype=np.float64)
 
-    <h3>Gaussian Kernel & Smoothed Results</h3>
-    <p>To reduce the grass texture before taking derivatives, the image is smoothed with a 13×13 Gaussian at $\sigma = 2$. The main outlines become more continuous but also wider and weaker.</p>
-    <div class="image-grid">
-        <div class="image-card">
-            <img src="21_gaussian_kernel.png" alt="2D Gaussian Filter">
-            <p>2D Gaussian Filter</p>
-            <span>15×15 kernel, σ = 2.0</span>
-        </div>
-        <div class="image-card">
-            <img src="22_cameraman_smoothed.png" alt="Cameraman Blurred with Gaussian">
-            <p>Gaussian-Smoothed Image</p>
-            <span>Original image ⊗ Gaussian filter</span>
-        </div>
-        <div class="image-card">
-            <img src="23_dx_smoothed.png" alt="Dx After Gaussian Smoothing">
-            <p>Smoothed D_x</p>
-            <span>Much less noisy than raw finite differences</span>
-        </div>
-        <div class="image-card">
-            <img src="24_dy_smoothed.png" alt="Dy After Gaussian Smoothing">
-            <p>Smoothed D_y</p>
-            <span>Cleaner edge detection</span>
-        </div>
-    </div>
+    dx_smoothed = scipy.signal.convolve2d(im_smoothed, Dx, mode='same', boundary='symm')
+    dy_smoothed = scipy.signal.convolve2d(im_smoothed, Dy, mode='same', boundary='symm')
+    grad_mag_smoothed = np.sqrt(dx_smoothed**2 + dy_smoothed**2)
 
-    <h3>Derivative of Gaussian (DoG) Filters</h3>
-    <p>Combining the Gaussian with $D_x$ and $D_y$ using full convolution ensures none of the filter gets cut off. These DoG filters allow blurring and differentiating in a single pass with the same symmetric padding as the two-step version.</p>
-    <div class="image-grid">
-        <div class="image-card">
-            <img src="27_dog_x_kernel.png" alt="DoG X Filter">
-            <p>DoG X Filter</p>
-            <span>Gaussian ⊗ [[1, 0, -1]]</span>
-        </div>
-        <div class="image-card">
-            <img src="28_dog_y_kernel.png" alt="DoG Y Filter">
-            <p>DoG Y Filter</p>
-            <span>Gaussian ⊗ [[1], [0], [-1]]</span>
-        </div>
-        <div class="image-card">
-            <img src="29_method2_dx.png" alt="Dx Using DoG Filter">
-            <p>D_x Using DoG Filter</p>
-            <span>Single convolution approach</span>
-        </div>
-        <div class="image-card">
-            <img src="30_method2_dy.png" alt="Dy Using DoG Filter">
-            <p>D_y Using DoG Filter</p>
-            <span>Single convolution approach</span>
-        </div>
-    </div>
+    # 3. Method 2: Derivative of Gaussian (DoG) Filters directly
+    dog_x_filter = scipy.signal.convolve2d(gaussian_filter, Dx, mode='full')
+    dog_y_filter = scipy.signal.convolve2d(gaussian_filter, Dy, mode='full')
 
-    <h3>Thresholding & Equivalence Verification</h3>
-    <p>After smoothing, the threshold is lowered to 0.07 to keep the main outline while removing most of the grass. While this loses some distant buildings and clothing folds, lowering it further brings back too much background texture. The thicker edges come from the blur since edge thinning is not applied.</p>
+    dx_dog = scipy.signal.convolve2d(im, dog_x_filter, mode='same', boundary='symm')
+    dy_dog = scipy.signal.convolve2d(im, dog_y_filter, mode='same', boundary='symm')
+    grad_mag_dog = np.sqrt(dx_dog**2 + dy_dog**2)
 
-    <div class="image-grid">
-        <div class="image-card">
-            <img src="26_method1_binarized.png" alt="Method 1 Binarized">
-            <p>Smooth, Then Differentiate</p>
-            <span>Threshold = 0.07</span>
+    # Thresholding selected at 0.07
+    threshold = 0.07
+    binarized_smoothed = (grad_mag_smoothed > threshold).astype(np.float32)
+    binarized_dog = (grad_mag_dog > threshold).astype(np.float32)
+
+    # Verification of numerical equality
+    diff_dx = np.max(np.abs(dx_smoothed - dx_dog))
+    diff_dy = np.max(np.abs(dy_smoothed - dy_dog))
+    print(f"Max difference Dx: {diff_dx:.2e}, Dy: {diff_dy:.2e}")
+</code></pre>
+
+            <h3>1. Gaussian Filter & Smoothing</h3>
+            <p>
+                A 2D Gaussian filter ($15 \times 15, \sigma = 2.0$) is created using the outer product of a 1D Gaussian kernel[cite: 1, 2]. 
+                Smoothing suppresses grass texture and fine noise, leaving wider and cleaner outlines[cite: 1].
+            </p>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="21_gaussian_kernel.png" alt="2D Gaussian Filter">
+                    <p>2D Gaussian Filter</p>
+                    <span>15×15 kernel, σ = 2.0</span>
+                </div>
+                <div class="image-card">
+                    <img src="22_cameraman_smoothed.png" alt="Cameraman Blurred">
+                    <p>Blurred Image</p>
+                    <span>Original ⊗ Gaussian filter</span>
+                </div>
+            </div>
+
+            <h3>2. Method 1: Gaussian Smoothing + Finite Differences</h3>
+            <p>
+                First, the image is blurred with the Gaussian filter, and then partial derivatives $D_x$ and $D_y$ are calculated[cite: 1, 2]. 
+                Applying a threshold of 0.07 keeps the key structural outlines while suppressing texture noise[cite: 1].
+            </p>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="23_smoothed_dx.png" alt="Dx After Gaussian Smoothing">
+                    <p>Smoothed D_x</p>
+                    <span>Horizontal derivative after smoothing</span>
+                </div>
+                <div class="image-card">
+                    <img src="24_smoothed_dy.png" alt="Dy After Gaussian Smoothing">
+                    <p>Smoothed D_y</p>
+                    <span>Vertical derivative after smoothing</span>
+                </div>
+                <div class="image-card">
+                    <img src="25_method1_grad_mag.png" alt="Smoothed Gradient Magnitude">
+                    <p>Smoothed Gradient Magnitude</p>
+                    <span>$\sqrt{D_x^2 + D_y^2}$</span>
+                </div>
+                <div class="image-card">
+                    <img src="26_method1_binarized.png" alt="Threshold 0.07">
+                    <p>Thresholded Edges (0.07)</p>
+                    <span>Selected threshold</span>
+                </div>
+            </div>
+
+            <h3>3. Method 2: Derivative of Gaussian (DoG) Filters</h3>
+            <p>
+                We pre-compute DoG filters ($G * D_x$ and $G * D_y$) using full convolution[cite: 1, 2]. 
+                Convolving the image directly with these single filters accomplishes blurring and differentiation in one pass[cite: 1, 2].
+            </p>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="27_dog_x_kernel.png" alt="DoG X Filter">
+                    <p>DoG X Filter</p>
+                    <span>Gaussian ⊗ [[1, 0, -1]]</span>
+                </div>
+                <div class="image-card">
+                    <img src="28_dog_y_kernel.png" alt="DoG Y Filter">
+                    <p>DoG Y Filter</p>
+                    <span>Gaussian ⊗ [[1], [0], [-1]]</span>
+                </div>
+                <div class="image-card">
+                    <img src="29_method2_dx.png" alt="Dx Using DoG Filter">
+                    <p>D_x Using DoG</p>
+
+                    <span>Single-pass convolution</span>
+                </div>
+                <div class="image-card">
+                    <img src="30_method2_dy.png" alt="Dy Using DoG Filter">
+                    <p>D_y Using DoG</p>
+                    <span>Single-pass convolution</span>
+                </div>
+            </div>
+
+            <h3>4. Verification & Comparison</h3>
+            <p>
+                The maximum difference between the two approaches is less than $1 \times 10^{-6}$ across the entire image[cite: 1, 2]. 
+                This confirms that both methods yield identical results to numerical precision, while the DoG approach offers better computational efficiency by reducing the required operations from two 2D convolutions per direction to just one[cite: 1, 2].
+            </p>
+
+            <h3>5. Application: Taj Mahal Sharpening Analysis</h3>
+            <p>
+                Below is the unsharp masking progression on the Taj Mahal image, isolating high frequencies ($I - G * I$) and scaling them by $\alpha$[cite: 1].
+            </p>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="32_taj_01_original.png" alt="Taj Original">
+                    <p>Taj Mahal Original</p>
+                    <span>Input image</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_02_blurred.png" alt="Taj Blurred">
+                    <p>Taj Blurred</p>
+                    <span>Gaussian blurred</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_03_high_freq.png" alt="Taj High Frequencies">
+                    <p>High Frequencies</p>
+                    <span>Original - Blurred</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_04_sharp_alpha_0.5.png" alt="Sharpened alpha=0.5">
+                    <p>Sharpened ($\alpha=0.5$)</p>
+                    <span>Subtle sharpening</span>
+                </div>
+            </div>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="32_taj_05_sharp_alpha_1.0.png" alt="Sharpened alpha=1.0">
+                    <p>Sharpened ($\alpha=1.0$)</p>
+                    <span>Balanced enhancement</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_06_sharp_alpha_2.0.png" alt="Sharpened alpha=2.0">
+                    <p>Sharpened ($\alpha=2.0$)</p>
+                    <span>Pronounced edges</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_07_sharp_alpha_4.0.png" alt="Sharpened alpha=4.0">
+                    <p>Sharpened ($\alpha=4.0$)</p>
+                    <span>High contrast / over-sharpened</span>
+                </div>
+            </div>
         </div>
-        <div class="image-card">
-            <img src="31_dog_binarized.png" alt="Method 2 Binarized">
-            <p>One DoG Convolution</p>
-            <span>Threshold = 0.07</span>
-        </div>
-    </div>
-
-    <p style="margin-top: 18px;"><strong>Verification:</strong> To verify that both methods produce identical results, the absolute difference between the smoothed finite difference results and the DoG filter results was computed. The maximum difference across both derivatives is less than $1 \times 10^{-6}$ (specifically $1.01 \times 10^{-15}$), confirming that both approaches agree to numerical precision even at the image boundary. The key difference is computational efficiency: the DoG approach requires only one convolution per derivative instead of two.</p>
-</div>
-
+ 
 
     </main>
 
