@@ -649,6 +649,181 @@ def run_part_1_3(image_path: str, output_dir: str):
             </p>
         </div>
 
+        <!-- Part 2.1 -->
+        <div class="card">
+            <h2>Part 2.1: Image Sharpening ("Unsharp Masking")</h2>
+            <p>
+                An image can be sharpened by extracting its high-frequency content and adding a scaled version back to the original image[cite: 1, 2]. 
+                The high-frequency component is obtained by subtracting a low-pass Gaussian blurred image from the original: 
+                $$\text{High Frequencies} = I - (I * G)$$
+                By scaling this detail by a factor $\alpha$, the sharpened image is:
+                $$\text{Sharpened} = I + \alpha (I - I * G) = I * ((1 + \alpha)\delta - \alpha G)$$
+                where $\delta$ is the unit impulse kernel and $G$ is the 2D Gaussian filter[cite: 1, 2]. This allows us to combine blurring and detail addition into a single unsharp mask filter operation[cite: 1, 2].
+            </p>
+
+            <h3>Implementation</h3>
+<pre><code>def unsharp_mask_filter(size: int, sigma: float, alpha: float) -> np.ndarray:
+    """Computes single unsharp mask kernel: (1 + alpha)*delta - alpha*G"""
+    gaussian = create_2d_gaussian(size, sigma)
+    impulse = np.zeros_like(gaussian)
+    impulse[size // 2, size // 2] = 1.0
+    return (1.0 + alpha) * impulse - alpha * gaussian
+
+def sharpen_image(im: np.ndarray, sigma: float = 1.5, alpha: float = 1.0) -> np.ndarray:
+    """Sharpens an image using the single-pass unsharp mask convolution kernel."""
+    kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+    kernel = unsharp_mask_filter(kernel_size, sigma, alpha)
+    
+    if im.ndim == 2:
+        sharpened = scipy.signal.convolve2d(im, kernel, mode='same', boundary='symm')
+    else:
+        sharpened = np.zeros_like(im)
+        for c in range(im.shape[2]):
+            sharpened[:, :, c] = scipy.signal.convolve2d(im[:, :, c], kernel, mode='same', boundary='symm')
+            
+    return np.clip(sharpened, 0.0, 1.0)
+</code></pre>
+
+            <h3>1. Taj Mahal Sharpening Progression</h3>
+            <p>
+                We apply unsharp masking with $\sigma = 1.5$ over varying $\alpha$ values ($0.5, 1.0, 2.0, 4.0$)[cite: 1, 2]. 
+                As $\alpha$ increases, structural boundaries like the archways, minarets, and dome become much sharper[cite: 1]. 
+                However, setting $\alpha = 4.0$ introduces visible haloing around edge boundaries and amplifies background noise[cite: 1, 2].
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="32_taj_01_original.png" alt="Taj Mahal Original">
+                    <p>Original</p>
+                    <span>Input image</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_02_blurred.png" alt="Taj Mahal Blurred">
+                    <p>Blurred (σ = 1.5)</p>
+                    <span>Low-pass Gaussian filter</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_03_high_freq.png" alt="Taj Mahal High Frequencies">
+                    <p>High Frequencies</p>
+                    <span>Original - Blurred (zero is gray)</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_04_sharp_alpha_0.5.png" alt="Taj Sharpened alpha 0.5">
+                    <p>Sharpened (α = 0.5)</p>
+                    <span>Subtle enhancement</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="32_taj_05_sharp_alpha_1.0.png" alt="Taj Sharpened alpha 1.0">
+                    <p>Sharpened (α = 1.0)</p>
+                    <span>Balanced contrast</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_06_sharp_alpha_2.0.png" alt="Taj Sharpened alpha 2.0">
+                    <p>Sharpened (α = 2.0)</p>
+                    <span>Pronounced details</span>
+                </div>
+                <div class="image-card">
+                    <img src="32_taj_07_sharp_alpha_4.0.png" alt="Taj Sharpened alpha 4.0">
+                    <p>Sharpened (α = 4.0)</p>
+                    <span>Strong contrast / minor halos</span>
+                </div>
+            </div>
+
+            <h3>2. Custom Image: Bird Sharpening Analysis</h3>
+            <p>
+                Sharpening applied to a natural bird photograph[cite: 1, 2]. Feather textures and sharp eye contours become significantly more defined as $\alpha$ increases[cite: 1, 2].
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="33_bird_01_original.png" alt="Bird Original">
+                    <p>Original</p>
+                    <span>Input image</span>
+                </div>
+                <div class="image-card">
+                    <img src="33_bird_02_blurred.png" alt="Bird Blurred">
+                    <p>Blurred (σ = 1.5)</p>
+                    <span>Low-pass filter</span>
+                </div>
+                <div class="image-card">
+                    <img src="33_bird_03_high_freq.png" alt="Bird High Frequencies">
+                    <p>High Frequencies</p>
+                    <span>Detail layer</span>
+                </div>
+                <div class="image-card">
+                    <img src="33_bird_04_sharp_alpha_0.5.png" alt="Bird Sharpened alpha 0.5">
+                    <p>Sharpened (α = 0.5)</p>
+                    <span>Slight detail boost</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="33_bird_05_sharp_alpha_1.0.png" alt="Bird Sharpened alpha 1.0">
+                    <p>Sharpened (α = 1.0)</p>
+                    <span>Optimal balance</span>
+                </div>
+                <div class="image-card">
+                    <img src="33_bird_06_sharp_alpha_2.0.png" alt="Bird Sharpened alpha 2.0">
+                    <p>Sharpened (α = 2.0)</p>
+                    <span>Enhanced feather outline</span>
+                </div>
+                <div class="image-card">
+                    <img src="33_bird_07_sharp_alpha_4.0.png" alt="Bird Sharpened alpha 4.0">
+                    <p>Sharpened (α = 4.0)</p>
+                    <span>Over-sharpened artifacting</span>
+                </div>
+            </div>
+
+            <h3>3. Evaluation: Can Sharpening Undo Blur?</h3>
+            <p>
+                To evaluate whether unsharp masking can reverse Gaussian blur, a crisp photo (Food image) was intentionally blurred using $\sigma = 2.0$ and then resharpened at varying $\alpha$ values ($0.5, 1.0, 2.0, 4.0$)[cite: 1, 2].
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="34_food_01_original.png" alt="Food Original">
+                    <p>Original Sharp Image</p>
+                    <span>Baseline ground truth</span>
+                </div>
+                <div class="image-card">
+                    <img src="34_food_02_blurred.png" alt="Food Blurred">
+                    <p>Blurred Image (σ = 2.0)</p>
+                    <span>High frequencies removed</span>
+                </div>
+                <div class="image-card">
+                    <img src="34_food_03_resharpened_alpha_0.5.png" alt="Food Resharpened alpha 0.5">
+                    <p>Resharpened (α = 0.5)</p>
+                    <span>Slight edge recovery</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="34_food_04_resharpened_alpha_1.0.png" alt="Food Resharpened alpha 1.0">
+                    <p>Resharpened (α = 1.0)</p>
+                    <span>Moderate recovery</span>
+                </div>
+                <div class="image-card">
+                    <img src="34_food_05_resharpened_alpha_2.0.png" alt="Food Resharpened alpha 2.0">
+                    <p>Resharpened (α = 2.0)</p>
+                    <span>Edge contrast boosted</span>
+                </div>
+                <div class="image-card">
+                    <img src="34_food_06_resharpened_alpha_4.0.png" alt="Food Resharpened alpha 4.0">
+                    <p>Resharpened (α = 4.0)</p>
+                    <span>High contrast / overshoot</span>
+                </div>
+            </div>
+
+            <p>
+                <strong>Conclusion:</strong> While resharpening restores local edge contrast and makes boundaries look crisp again, it <em>cannot fully recover</em> fine surface textures destroyed by the initial blur[cite: 1, 2]. The low-pass Gaussian convolution permanently attenuates high-frequency signal content, so sharpening merely amplifies whatever remaining high frequencies exist, often creating high-contrast edges without restoring lost texture detail[cite: 1, 2].
+            </p>
+        </div>
+
     </main>
 
 </body>
