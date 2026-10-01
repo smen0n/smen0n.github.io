@@ -1026,6 +1026,201 @@ def sharpen_image(im: np.ndarray, sigma: float = 1.5, alpha: float = 1.0) -> np.
             </div>
         </div>
 
+<!-- Part 2.3 -->
+        <div class="card">
+            <h2>Part 2.3: Gaussian and Laplacian Stacks</h2>
+            <p>
+                To isolate image details at different spatial scales, we build Gaussian and Laplacian stacks. 
+                Unlike an image pyramid, images in a stack retain their original spatial resolution (no downsampling).
+            </p>
+            <p>
+                A Gaussian stack $\{G_0, G_1, \dots, G_N\}$ is formed by repeatedly blurring the image with exponentially increasing $\sigma$ values ($G_0 = I$, $G_{k+1} = G_k * G_{\sigma_k}$). 
+                The Laplacian stack $\{L_0, L_1, \dots, L_N\}$ isolates specific frequency bands by taking differences between consecutive Gaussian levels:
+                $$L_k = G_k - G_{k+1} \quad \text{for } 0 \le k < N, \quad \text{and } L_N = G_N$$
+                Because $I = \sum_{k=0}^N L_k$, the original image can be perfectly reconstructed by summing all Laplacian levels and the low-frequency residual $G_N$.
+            </p>
+
+            <h3>Implementation</h3>
+<pre><code>def build_gaussian_stack(im: np.ndarray, num_levels: int, initial_sigma: float) -> list:
+    """Builds a Gaussian stack without downsampling."""
+    stack = [im.copy()]
+    current_im = im.copy()
+    for i in range(num_levels - 1):
+        sigma = initial_sigma * (2 ** i)
+        kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+        g_kernel = create_2d_gaussian(kernel_size, sigma)
+        
+        if im.ndim == 2:
+            current_im = scipy.signal.convolve2d(current_im, g_kernel, mode='same', boundary='symm')
+        else:
+            current_im = np.zeros_like(current_im)
+            for c in range(im.shape[2]):
+                current_im[:, :, c] = scipy.signal.convolve2d(stack[-1][:, :, c], g_kernel, mode='same', boundary='symm')
+        stack.append(current_im)
+    return stack
+
+def build_laplacian_stack(gaussian_stack: list) -> list:
+    """Builds a Laplacian stack from a Gaussian stack."""
+    laplacian_stack = []
+    num_levels = len(gaussian_stack)
+    for i in range(num_levels - 1):
+        laplacian_stack.append(gaussian_stack[i] - gaussian_stack[i+1])
+    laplacian_stack.append(gaussian_stack[-1].copy())  # Residual level
+    return laplacian_stack
+</code></pre>
+
+            <h3>1. Apple & Orange Stacks</h3>
+            <p>
+                Below are the 5-level Gaussian and Laplacian stacks for the classic Apple and Orange inputs. 
+                The Laplacian stacks isolate high-frequency surface textures at Level 0 down to smooth, broad lighting transitions at Level 4.
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="apple.jpg" alt="Original Apple Image">
+                    <p>Apple Input</p>
+                    <span>Original image</span>
+                </div>
+                <div class="image-card">
+                    <img src="orange.jpg" alt="Original Orange Image">
+                    <p>Orange Input</p>
+                    <span>Original image</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="38_apple_gaussian_stack.png" alt="Apple Gaussian Stack">
+                    <p>Apple Gaussian Stack</p>
+                    <span>Levels 0–4 blurring progression</span>
+                </div>
+                <div class="image-card">
+                    <img src="39_apple_laplacian_stack.png" alt="Apple Laplacian Stack">
+                    <p>Apple Laplacian Stack</p>
+                    <span>High to low frequency bands</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="40_orange_gaussian_stack.png" alt="Orange Gaussian Stack">
+                    <p>Orange Gaussian Stack</p>
+                    <span>Levels 0–4 blurring progression</span>
+                </div>
+                <div class="image-card">
+                    <img src="41_orange_laplacian_stack.png" alt="Orange Laplacian Stack">
+                    <p>Orange Laplacian Stack</p>
+                    <span>High to low frequency bands</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Part 2.4 -->
+        <div class="card">
+            <h2>Part 2.4: Multiresolution Blending</h2>
+            <p>
+                Multiresolution blending (Burt and Adelson) seamlessly combines two images $A$ and $B$ across multiple spatial frequency bands using a soft mask $M$. 
+                By constructing a Gaussian stack for the mask $M_k$ and Laplacian stacks for both images ($L_k(A)$ and $L_k(B)$), each frequency band is blended independently:
+                $$B_k = M_k \cdot L_k(A) + (1 - M_k) \cdot L_k(B)$$
+                Summing all blended levels $\sum B_k$ yields a composite image where sharp details transition over a narrow boundary while smooth lighting and color variations transition over a wide, seamless seam.
+            </p>
+
+            <h3>Implementation</h3>
+<pre><code>def multiresolution_blend(im1: np.ndarray, im2: np.ndarray, mask: np.ndarray, num_levels: int = 5, sigma: float = 2.0) -> np.ndarray:
+    """Blends two images using Laplacian stacks and a smoothed mask Gaussian stack."""
+    g_stack1 = build_gaussian_stack(im1, num_levels, sigma)
+    g_stack2 = build_gaussian_stack(im2, num_levels, sigma)
+    mask_stack = build_gaussian_stack(mask, num_levels, sigma)
+    
+    l_stack1 = build_laplacian_stack(g_stack1)
+    l_stack2 = build_laplacian_stack(g_stack2)
+    
+    blended_stack = []
+    for k in range(num_levels):
+        m_k = mask_stack[k]
+        if im1.ndim == 3 and m_k.ndim == 2:
+            m_k = np.repeat(m_k[:, :, np.newaxis], 3, axis=2)
+        b_k = m_k * l_stack1[k] + (1.0 - m_k) * l_stack2[k]
+        blended_stack.append(b_k)
+        
+    final_blend = np.sum(blended_stack, axis=0)
+    return np.clip(final_blend, 0.0, 1.0)
+</code></pre>
+
+            <h3>1. The Classic Oraple</h3>
+            <p>
+                Using a vertical step mask, we blend the Apple and Orange images. 
+                Unlike a direct cut, multiresolution blending avoids harsh seam artifacts by smoothly transitioning low-frequency skin tones while keeping fine surface textures crisp.
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="42_oraple_final.png" alt="Oraple Final Multiresolution Blend">
+                    <p>Oraple Final Blend</p>
+                    <span>Seamless 5-level blend</span>
+                </div>
+                <div class="image-card">
+                    <img src="43_oraple_stack_levels.png" alt="Oraple Stack Breakdown">
+                    <p>Oraple Level Breakdown</p>
+                    <span>Masked contributions at levels 0, 2, and 4 (Fig. 3.42)</span>
+                </div>
+            </div>
+
+            <h3>2. Custom Blend 1: Moon Cheese</h3>
+            <p>
+                Blending the surface of a full moon with texture from a cheese wheel using an irregular circular mask.
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="moon.jpg" alt="Moon Input Image">
+                    <p>Moon Input</p>
+                    <span>Primary image</span>
+                </div>
+                <div class="image-card">
+                    <img src="cheese.jpg" alt="Cheese Input Image">
+                    <p>Cheese Input</p>
+                    <span>Secondary image</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="44_moon_cheese_final.png" alt="Moon Cheese Final Blend">
+                    <p>Moon Cheese Final Blend</p>
+                    <span>Multiresolution result</span>
+                </div>
+                <div class="image-card">
+                    <img src="44_fig10_moon_cheese_process.png" alt="Moon Cheese Process Decomposition">
+                    <p>Blending Decomposition</p>
+                    <span>Stack level contributions</span>
+                </div>
+            </div>
+
+            <h3>3. Custom Blend 2: Aurora Polar Night</h3>
+            <p>
+                Blending a vivid northern lights landscape with a polar night scene using a custom horizon mask.
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="aurora.jpg" alt="Aurora Input Image">
+                    <p>Aurora Input</p>
+                    <span>Sky component</span>
+                </div>
+                <div class="image-card">
+                    <img src="polarnight.jpg" alt="Polar Night Input Image">
+                    <p>Polar Night Input</p>
+                    <span>Landscape component</span>
+                </div>
+                <div class="image-card">
+                    <img src="45_aurora_polarnight_final.png" alt="Aurora Polar Night Final Blend">
+                    <p>Aurora Polar Night Final Blend</p>
+                    <span>Multiresolution composite</span>
+                </div>
+            </div>
+        </div>
+
     </main>
 
 </body>
