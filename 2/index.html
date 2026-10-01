@@ -416,7 +416,7 @@
 <!-- Part 1.2 -->
         <div class="card">
             <h2>Part 1.2: Finite Difference Operator</h2>
-            <p>To detect edges, we first compute the partial derivatives of the original Cameraman image in the horizontal ($x$) and vertical ($y$) directions using finite difference operators $D_x = [1, 0, -1]$ and $D_y = [1, 0, -1]^\top$. Combining these partial derivatives gives the <strong>gradient magnitude</strong>: $\text{Magnitude} = \sqrt{D_x^2 + D_y^2}$. Finally, thresholding the gradient magnitude produces a binarized edge map[cite: 1, 2, 3].</p>
+            <p>To detect edges, we first compute the partial derivatives of the original Cameraman image in the horizontal ($x$) and vertical ($y$) directions using finite difference operators $D_x = [1, 0, -1]$ and $D_y = [1, 0, -1]^\top$. Combining these partial derivatives gives the <strong>gradient magnitude</strong>: $\text{Magnitude} = \sqrt{D_x^2 + D_y^2}$. Finally, thresholding the gradient magnitude produces a binarized edge map.</p>
 
             <h3>Implementation</h3>
 <pre><code>def run_part_1_2(output_dir: str):
@@ -460,7 +460,7 @@
         save_and_display(binarized, os.path.join(output_dir, filename), title_text)</code></pre>
 
             <h3>Original Image, Partial Derivatives & Gradient Magnitude</h3>
-            <p>The $D_x$ filter highlights vertical edges (changes across columns), while $D_y$ highlights horizontal edges (changes across rows)[cite: 2, 3]. Combining them yields the orientation-invariant gradient magnitude map[cite: 1, 2, 3].</p>
+            <p>The $D_x$ filter highlights vertical edges (changes across columns), while $D_y$ highlights horizontal edges (changes across rows). Combining them yields the orientation-invariant gradient magnitude map.</p>
             <div class="image-grid">
                 <div class="image-card">
                     <img src="13_cameraman_original.png" alt="Original Cameraman">
@@ -485,7 +485,7 @@
             </div>
 
             <h3>Threshold Selection & Analysis</h3>
-            <p>Finding the right threshold is a trade-off between suppressing high-frequency background noise (such as grass texture) and preserving structural edges (like the camera body, tripod legs, and skyline)[cite: 2, 3]. Four percentile-based thresholds were tested:</p>
+            <p>Finding the right threshold is a trade-off between suppressing high-frequency background noise (such as grass texture) and preserving structural edges (like the camera body, tripod legs, and skyline). Four percentile-based thresholds were tested:</p>
 
             <div class="image-grid">
                 <div class="image-card">
@@ -510,16 +510,16 @@
                 </div>
             </div>
 
-            <p style="margin-top: 18px;"><strong>Selected Threshold Justification:</strong> The <strong>85th percentile threshold</strong> was chosen as the optimal choice[cite: 2]. It successfully eliminates most high-frequency background noise in the grass field while maintaining sharp, continuous outlines for the subject, tripod, camera, and horizon[cite: 2]. The 70th and 80th percentiles contain noticeable noise artifacts[cite: 2], whereas the 90th percentile is too aggressive and cuts off key structural details of the tripod and coat[cite: 2].</p>
+            <p style="margin-top: 18px;"><strong>Selected Threshold Justification:</strong> The <strong>85th percentile threshold</strong> was chosen as the optimal choice. It successfully eliminates most high-frequency background noise in the grass field while maintaining sharp, continuous outlines for the subject, tripod, camera, and horizon. The 70th and 80th percentiles contain noticeable noise artifacts, whereas the 90th percentile is too aggressive and cuts off key structural details of the tripod and coat.</p>
         </div>
 
         <!-- Part 1.3 -->
         <div class="card">
             <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
             <p>
-                To eliminate high-frequency noise (such as grass texture) prior to edge detection, we apply a Gaussian filter $G$[cite: 1, 2]. 
+                To eliminate high-frequency noise (such as grass texture) prior to edge detection, we apply a Gaussian filter $G$. 
                 By the associative property of convolution, $(I * G) * D = I * (G * D)$, smoothing then differentiating is mathematically identical 
-                to convolving the image with a single pre-computed Derivative of Gaussian (DoG) filter[cite: 1, 2].
+                to convolving the image with a single pre-computed Derivative of Gaussian (DoG) filter.
             </p>
 
             <h3>Implementation</h3>
@@ -565,8 +565,8 @@ def run_part_1_3(image_path: str, output_dir: str):
 
             <h3>1. Gaussian Filter & Smoothing</h3>
             <p>
-                A 2D Gaussian filter ($15 \times 15, \sigma = 2.0$) is created using the outer product of a 1D Gaussian kernel[cite: 1, 2]. 
-                Smoothing suppresses grass texture and fine noise, leaving wider and cleaner outlines[cite: 1].
+                A 2D Gaussian filter ($15 \times 15, \sigma = 2.0$) is created using the outer product of a 1D Gaussian kernel. 
+                Smoothing suppresses grass texture and fine noise, leaving wider and cleaner outlines.
             </p>
             <div class="image-grid">
                 <div class="image-card">
@@ -583,8 +583,8 @@ def run_part_1_3(image_path: str, output_dir: str):
 
             <h3>2. Method 1: Gaussian Smoothing + Finite Differences</h3>
             <p>
-                First, the image is blurred with the Gaussian filter, and then partial derivatives $D_x$ and $D_y$ are calculated[cite: 1, 2]. 
-                Applying a threshold of 0.07 keeps the key structural outlines while suppressing texture noise[cite: 1].
+                First, the image is blurred with the Gaussian filter, and then partial derivatives $D_x$ and $D_y$ are calculated. 
+                Applying a threshold of 0.07 keeps the key structural outlines while suppressing texture noise.
             </p>
             <div class="image-grid">
                 <div class="image-card">
@@ -611,8 +611,8 @@ def run_part_1_3(image_path: str, output_dir: str):
 
             <h3>3. Method 2: Derivative of Gaussian (DoG) Filters</h3>
             <p>
-                We pre-compute DoG filters ($G * D_x$ and $G * D_y$) using full convolution[cite: 1, 2]. 
-                Convolving the image directly with these single filters accomplishes blurring and differentiation in one pass[cite: 1, 2].
+                We pre-compute DoG filters ($G * D_x$ and $G * D_y$) using full convolution. 
+                Convolving the image directly with these single filters accomplishes blurring and differentiation in one pass.
             </p>
             <div class="image-grid">
                 <div class="image-card">
@@ -644,8 +644,8 @@ def run_part_1_3(image_path: str, output_dir: str):
 
             <h3>4. Verification & Comparison</h3>
             <p>
-                The maximum difference between the two approaches is less than $1 \times 10^{-6}$ across the entire image[cite: 1, 2]. 
-                This confirms that both methods yield identical results to numerical precision, while the DoG approach offers better computational efficiency by reducing the required operations from two 2D convolutions per direction to just one[cite: 1, 2].
+                The maximum difference between the two approaches is less than $1 \times 10^{-6}$ across the entire image. 
+                This confirms that both methods yield identical results to numerical precision, while the DoG approach offers better computational efficiency by reducing the required operations from two 2D convolutions per direction to just one.
             </p>
         </div>
 
@@ -653,12 +653,12 @@ def run_part_1_3(image_path: str, output_dir: str):
         <div class="card">
             <h2>Part 2.1: Image Sharpening ("Unsharp Masking")</h2>
             <p>
-                An image can be sharpened by extracting its high-frequency content and adding a scaled version back to the original image[cite: 1, 2]. 
+                An image can be sharpened by extracting its high-frequency content and adding a scaled version back to the original image. 
                 The high-frequency component is obtained by subtracting a low-pass Gaussian blurred image from the original: 
                 $$\text{High Frequencies} = I - (I * G)$$
                 By scaling this detail by a factor $\alpha$, the sharpened image is:
                 $$\text{Sharpened} = I + \alpha (I - I * G) = I * ((1 + \alpha)\delta - \alpha G)$$
-                where $\delta$ is the unit impulse kernel and $G$ is the 2D Gaussian filter[cite: 1, 2]. This allows us to combine blurring and detail addition into a single unsharp mask filter operation[cite: 1, 2].
+                where $\delta$ is the unit impulse kernel and $G$ is the 2D Gaussian filter. This allows us to combine blurring and detail addition into a single unsharp mask filter operation.
             </p>
 
             <h3>Implementation</h3>
@@ -686,9 +686,9 @@ def sharpen_image(im: np.ndarray, sigma: float = 1.5, alpha: float = 1.0) -> np.
 
             <h3>1. Taj Mahal Sharpening Progression</h3>
             <p>
-                We apply unsharp masking with $\sigma = 1.5$ over varying $\alpha$ values ($0.5, 1.0, 2.0, 4.0$)[cite: 1, 2]. 
-                As $\alpha$ increases, structural boundaries like the archways, minarets, and dome become much sharper[cite: 1]. 
-                However, setting $\alpha = 4.0$ introduces visible haloing around edge boundaries and amplifies background noise[cite: 1, 2].
+                We apply unsharp masking with $\sigma = 1.5$ over varying $\alpha$ values ($0.5, 1.0, 2.0, 4.0$). 
+                As $\alpha$ increases, structural boundaries like the archways, minarets, and dome become much sharper. 
+                However, setting $\alpha = 4.0$ introduces visible haloing around edge boundaries and amplifies background noise.
             </p>
 
             <div class="image-grid">
@@ -734,7 +734,7 @@ def sharpen_image(im: np.ndarray, sigma: float = 1.5, alpha: float = 1.0) -> np.
 
             <h3>2. Custom Image: Bird Sharpening Analysis</h3>
             <p>
-                Sharpening applied to a natural bird photograph[cite: 1, 2]. Feather textures and sharp eye contours become significantly more defined as $\alpha$ increases[cite: 1, 2].
+                Sharpening applied to a natural bird photograph. Feather textures and sharp eye contours become significantly more defined as $\alpha$ increases.
             </p>
 
             <div class="image-grid">
@@ -780,7 +780,7 @@ def sharpen_image(im: np.ndarray, sigma: float = 1.5, alpha: float = 1.0) -> np.
 
             <h3>3. Evaluation: Can Sharpening Undo Blur?</h3>
             <p>
-                To evaluate whether unsharp masking can reverse Gaussian blur, a crisp photo (Food image) was intentionally blurred using $\sigma = 2.0$ and then resharpened at varying $\alpha$ values ($0.5, 1.0, 2.0, 4.0$)[cite: 1, 2].
+                To evaluate whether unsharp masking can reverse Gaussian blur, a crisp photo (Food image) was intentionally blurred using $\sigma = 2.0$ and then resharpened at varying $\alpha$ values ($0.5, 1.0, 2.0, 4.0$).
             </p>
 
             <div class="image-grid">
@@ -820,8 +820,210 @@ def sharpen_image(im: np.ndarray, sigma: float = 1.5, alpha: float = 1.0) -> np.
             </div>
 
             <p>
-                <strong>Conclusion:</strong> While resharpening restores local edge contrast and makes boundaries look crisp again, it <em>cannot fully recover</em> fine surface textures destroyed by the initial blur[cite: 1, 2]. The low-pass Gaussian convolution permanently attenuates high-frequency signal content, so sharpening merely amplifies whatever remaining high frequencies exist, often creating high-contrast edges without restoring lost texture detail[cite: 1, 2].
+                <strong>Conclusion:</strong> While resharpening restores local edge contrast and makes boundaries look crisp again, it <em>cannot fully recover</em> fine surface textures destroyed by the initial blur. The low-pass Gaussian convolution permanently attenuates high-frequency signal content, so sharpening merely amplifies whatever remaining high frequencies exist, often creating high-contrast edges without restoring lost texture detail.
             </p>
+        </div>
+
+        <!-- Part 2.2 -->
+        <div class="card">
+            <h2>Part 2.2: Hybrid Images</h2>
+            <p>
+                Hybrid images combine the low-frequency spatial components of one image with the high-frequency components of another. 
+                Because human visual perception processes high frequencies at close distances and low frequencies from farther away, 
+                the high-frequency image dominates when viewed up close, while the low-frequency image becomes clearly visible at a distance.
+            </p>
+            <p>
+                Mathematically, given a low-frequency image $I_{\text{low}}$ filtered with Gaussian parameter $\sigma_{\text{low}}$ and a high-frequency image $I_{\text{high}}$ filtered with $\sigma_{\text{high}}$, the hybrid image is computed as:
+                $$\text{Hybrid} = (I_{\text{low}} * G_{\sigma_{\text{low}}}) + \left( I_{\text{high}} - (I_{\text{high}} * G_{\sigma_{\text{high}}}) \right)$$
+            </p>
+
+            <h3>Implementation</h3>
+<pre><code>def create_hybrid_image(im1: np.ndarray, im2: np.ndarray, 
+                        sigma_low: float, sigma_high: float) -> np.ndarray:
+    """
+    Creates a hybrid image by blending low frequencies of im1 with 
+    high frequencies of im2.
+    """
+    # 1. Compute low frequencies for Image 1
+    kernel_low_size = int(2 * np.ceil(3 * sigma_low) + 1)
+    g_low = create_2d_gaussian(kernel_low_size, sigma_low)
+    im1_low = scipy.signal.convolve2d(im1, g_low, mode='same', boundary='symm')
+
+    # 2. Compute high frequencies for Image 2 (Original - Blurred)
+    kernel_high_size = int(2 * np.ceil(3 * sigma_high) + 1)
+    g_high = create_2d_gaussian(kernel_high_size, sigma_high)
+    im2_blurred = scipy.signal.convolve2d(im2, g_high, mode='same', boundary='symm')
+    im2_high = im2 - im2_blurred
+
+    # 3. Combine low and high frequency channels
+    hybrid = im1_low + im2_high
+    return np.clip(hybrid, 0.0, 1.0)
+</code></pre>
+
+            <h3>1. Primary Example: Derek + Nutmeg (Full Breakdown & FFT Analysis)</h3>
+            <p>
+                We align the eyes of Derek (low-frequency source) and Nutmeg (high-frequency source). 
+                Applying a low-pass Gaussian filter ($\sigma_{\text{low}} = 7$) captures Derek's facial structure, while a high-pass filter ($\sigma_{\text{high}} = 4$) extracts Nutmeg's sharp fur and facial details.
+            </p>
+
+            <!-- Inputs and Filtered Output -->
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_01_high_input_aligned.png" alt="Nutmeg Aligned High Input">
+                    <p>Nutmeg (High-Freq Source)</p>
+                    <span>Aligned Input</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_02_low_input_aligned.png" alt="Derek Aligned Low Input">
+                    <p>Derek (Low-Freq Source)</p>
+                    <span>Aligned Input</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_03_low_freq.png" alt="Derek Low Frequency Component">
+                    <p>Low-Pass Result</p>
+                    <span>Gaussian Filter (σ = 7)</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_04_high_freq.png" alt="Nutmeg High Frequency Component">
+                    <p>High-Pass Result</p>
+                    <span>Detail Filter (σ = 4)</span>
+                </div>
+            </div>
+
+            <!-- Hybrid and Multi-scale -->
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_05_hybrid.png" alt="Nutmeg Derek Hybrid Image">
+                    <p>Final Hybrid Result</p>
+                    <span>Combined Low + High</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_06_multiscale.png" alt="Nutmeg Derek Multi-Scale Visual Perception">
+                    <p>Multi-Scale View</p>
+                    <span>Simulates viewing at increasing distances</span>
+                </div>
+            </div>
+
+            <!-- FFT Frequency Domain Analysis -->
+            <h3>Frequency Domain Analysis (FFT Spectrum)</h3>
+            <p>
+                Below are the 2D Fourier Transforms ($\log(1 + |\text{FFT}|)$) illustrating frequency distribution across each stage of processing. 
+                The low-pass operation concentrates energy at the central low frequencies, while the high-pass operation suppresses central energy and isolates boundary frequencies.
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_07_fft_high_input.png" alt="FFT High Input Nutmeg">
+                    <p>Input High-Freq FFT</p>
+                    <span>Nutmeg spectrum</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_08_fft_low_input.png" alt="FFT Low Input Derek">
+                    <p>Input Low-Freq FFT</p>
+                    <span>Derek spectrum</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_09_fft_high_passed.png" alt="FFT High Passed Nutmeg">
+                    <p>High-Passed FFT</p>
+                    <span>High frequencies isolated</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_10_fft_low_passed.png" alt="FFT Low Passed Derek">
+                    <p>Low-Passed FFT</p>
+                    <span>Low frequencies isolated</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_11_fft_hybrid.png" alt="FFT Hybrid Spectrum">
+                    <p>Hybrid Spectrum FFT</p>
+                    <span>Merged spectrum</span>
+                </div>
+            </div>
+
+            <!-- Example 2: Angry + Smiling -->
+            <h3>2. Facial Expression Blend: Angry + Smiling</h3>
+            <p>
+                Combining fine high-frequency lines of an angry expression with soft low-frequency contours of a smiling face. 
+                Up close, the angry expression dominates; as you step back, the smiling expression emerges clearly.
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="36_angry_smiling_01_high_input_aligned.png" alt="Angry High Input Aligned">
+                    <p>High-Freq Source</p>
+                    <span>Angry Expression</span>
+                </div>
+                <div class="image-card">
+                    <img src="36_angry_smiling_02_low_input_aligned.png" alt="Smiling Low Input Aligned">
+                    <p>Low-Freq Source</p>
+                    <span>Smiling Expression</span>
+                </div>
+                <div class="image-card">
+                    <img src="36_angry_smiling_03_low_freq.png" alt="Smiling Low Pass">
+                    <p>Low-Pass Component</p>
+                    <span>Base shape</span>
+                </div>
+                <div class="image-card">
+                    <img src="36_angry_smiling_04_high_freq.png" alt="Angry High Pass">
+                    <p>High-Pass Component</p>
+                    <span>Sharp features</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="36_angry_smiling_05_hybrid.png" alt="Angry Smiling Hybrid">
+                    <p>Final Hybrid Result</p>
+                    <span>Angry (close) / Smiling (far)</span>
+                </div>
+                <div class="image-card">
+                    <img src="36_angry_smiling_06_multiscale.png" alt="Angry Smiling Multi-Scale">
+                    <p>Multi-Scale View</p>
+                    <span>Distance simulation</span>
+                </div>
+            </div>
+
+            <!-- Example 3: Harry Potter + Voldemort -->
+            <h3>3. Character Hybrid: Harry Potter + Voldemort</h3>
+            <p>
+                Combining high frequencies from Voldemort with low frequencies from Harry Potter. 
+                Due to precise eye and nose alignment, Voldemort's sharp facial details dominate close-up, while Harry's distinctive head structure becomes evident at a distance.
+            </p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="37_harry_voldemort_01_high_input_aligned.png" alt="Voldemort High Input Aligned">
+                    <p>Voldemort Aligned</p>
+                    <span>High-Freq Source</span>
+                </div>
+                <div class="image-card">
+                    <img src="37_harry_voldemort_02_low_input_aligned.png" alt="Harry Low Input Aligned">
+                    <p>Harry Aligned</p>
+                    <span>Low-Freq Source</span>
+                </div>
+                <div class="image-card">
+                    <img src="37_harry_voldemort_03_low_freq.png" alt="Harry Low Pass">
+                    <p>Harry Low-Pass</p>
+                    <span>Soft low-pass filter</span>
+                </div>
+                <div class="image-card">
+                    <img src="37_harry_voldemort_04_high_freq.png" alt="Voldemort High Pass">
+                    <p>Voldemort High-Pass</p>
+                    <span>Sharp high-pass filter</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="37_harry_voldemort_05_hybrid.png" alt="Harry Voldemort Hybrid">
+                    <p>Final Hybrid Result</p>
+                    <span>Voldemort (close) / Harry (far)</span>
+                </div>
+                <div class="image-card">
+                    <img src="37_harry_voldemort_06_multiscale.png" alt="Harry Voldemort Multi-Scale">
+                    <p>Multi-Scale View</p>
+                    <span>Distance perception sequence</span>
+                </div>
+            </div>
         </div>
 
     </main>
