@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS180: Project 2 - Fun with Filters and Frequencies!</title>
+    
+    <!-- KaTeX for rendering LaTeX inline equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body);"></script>
+
     <style>
         :root {
             --body-bg: #eef2f5;
@@ -155,7 +162,7 @@
         /* Grid for Image Comparison */
         .image-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
@@ -245,172 +252,396 @@
 
         <div class="title-box">
             <h1>Project 2: Fun with Filters and Frequencies!</h1>
-            <p>Exploring 2D convolutions, edge detection, and frequency domain techniques</p>
+            <p>2D Convolutions, Derivative Filters, Sharpening, Hybrid Images, and Multiresolution Blending</p>
         </div>
     </header>
 
     <!-- Content Area -->
     <main class="container">
         
+        <!-- SECTION 1 -->
         <h2 class="section-title">Part 1: Fun with Filters</h2>
 
+        <!-- Part 1.1 -->
         <div class="card">
             <h2>Part 1.1: Convolutions from Scratch!</h2>
-            <p>In this section, 2D convolution was implemented from scratch using zero padding. First using a 4-loop method, then optimized into a vectorized 2-loop method, and finally compared against SciPy's built-in <code>scipy.signal.convolve2d</code> function.</p>
+            <p>Implementation of 2D convolutions using zero padding: comparing a 4-loop method with a vectorized 2-loop method.</p>
 
-            <h3>1. Four-Loop Implementation</h3>
-<pre><code>def convolve2d(im1, im2, padding=0):
-    im2_height, im2_width = im2.shape
-    im1_height, im1_width = im1.shape
+            <h3>Implementation</h3>
+<pre><code>def apply_zero_padding(image: np.ndarray, pad_height: int, pad_width: int) -> np.ndarray:
+    padded_image = np.pad(image, pad_width=((pad_height, pad_height), (pad_width, pad_width)), mode='constant', constant_values=0)
+    return padded_image
 
-    # pad
-    padded_im1 = np.pad(im1, padding, mode='constant', constant_values=0)
+def prepare_kernel_and_padding(kernel: np.ndarray):
+    flipped_kernel = np.flipud(np.fliplr(kernel))
+    pad_height = kernel.shape[0] // 2
+    pad_width = kernel.shape[1] // 2
+    return flipped_kernel, pad_height, pad_width
+
+def convolve2d_four_loops(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    image_height, image_width = image.shape
+    flipped_kernel, pad_height, pad_width = prepare_kernel_and_padding(kernel)
+    padded_image = apply_zero_padding(image, pad_height, pad_width)
+    output_image = np.zeros((image_height, image_width), dtype=np.float64)
+    for row_idx in range(image_height):
+        for col_idx in range(image_width):
+            pixel_sum = 0.0
+            for kernel_row in range(flipped_kernel.shape[0]):
+                for kernel_col in range(flipped_kernel.shape[1]):
+                    image_pixel = padded_image[row_idx + kernel_row, col_idx + kernel_col]
+                    kernel_weight = flipped_kernel[kernel_row, kernel_col]
+                    pixel_sum += image_pixel * kernel_weight
+            output_image[row_idx, col_idx] = pixel_sum
+    return output_image
+
+def convolve2d_two_loops(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    image_height, image_width = image.shape
+    flipped_kernel, pad_height, pad_width = prepare_kernel_and_padding(kernel)
+    kernel_height, kernel_width = flipped_kernel.shape
+    padded_image = apply_zero_padding(image, pad_height, pad_width)
+    output_image = np.zeros((image_height, image_width), dtype=np.float64)
+    for row_idx in range(image_height):
+        for col_idx in range(image_width):
+            image_patch = padded_image[row_idx : row_idx + kernel_height, col_idx : col_idx + kernel_width]
+            output_image[row_idx, col_idx] = np.sum(image_patch * flipped_kernel)
+    return output_image</code></pre>
+        </div>
+
+        <!-- Part 1.2 -->
+        <div class="card">
+            <h2>Part 1.2: Finite Difference Operator</h2>
+            <p>To detect edges, we first compute the partial derivatives of the original Cameraman image in the horizontal ($x$) and vertical ($y$) directions using finite difference operators $D_x = [1, 0, -1]$ and $D_y = [1, 0, -1]^\top$. Combining these partial derivatives gives the <strong>gradient magnitude</strong>: $\text{Magnitude} = \sqrt{D_x^2 + D_y^2}$. Finally, thresholding the gradient magnitude produces a binarized edge map.</p>
+
+            <h3>Implementation</h3>
+<pre><code>def run_part_1_2(output_dir: str):
+    img_path = "cameraman.png"
+    cameraman_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    if cameraman_img is None:
+        raise FileNotFoundError(f"Could not find '{img_path}'.")
+    cameraman = cameraman_img.astype(np.float64) / 255.0
     
-    # get output dimensions based on padding type
-    if isinstance(padding, tuple):
-        pad_y = padding[0][0] + padding[0][1]
-        pad_x = padding[1][0] + padding[1][1]
+    # Define finite difference operators
+    Dx = np.array([[1, 0, -1]], dtype=np.float64)
+    Dy = np.array([[1], [0], [-1]], dtype=np.float64)
+    
+    # Compute partial derivatives via 2D convolution
+    dx_img = scipy.signal.convolve2d(cameraman, Dx, mode='same', boundary='symm')
+    dy_img = scipy.signal.convolve2d(cameraman, Dy, mode='same', boundary='symm')
+    
+    # Calculate gradient magnitude
+    grad_mag = np.sqrt(dx_img**2 + dy_img**2)
+    
+    save_and_display(cameraman, os.path.join(output_dir, "13_cameraman_original.png"), "Original Cameraman")
+    save_and_display(dx_img, os.path.join(output_dir, "14_cameraman_dx.png"), "Dx Derivative")
+    save_and_display(dy_img, os.path.join(output_dir, "15_cameraman_dy.png"), "Dy Derivative")
+    save_and_display(grad_mag, os.path.join(output_dir, "16_cameraman_grad_mag.png"), "Gradient Magnitude")
+
+    # Evaluate multiple percentile-based thresholds
+    p70_val = np.percentile(grad_mag, 70)
+    p80_val = np.percentile(grad_mag, 80)
+    p85_val = np.percentile(grad_mag, 85)
+    p90_val = np.percentile(grad_mag, 90)
+
+    threshold_configs = [
+        (p70_val, "17_thresh_70th.png", f"Threshold 1: 70th Percentile ({p70_val:.4f})"),
+        (p80_val, "18_thresh_80th.png", f"Threshold 2: 80th Percentile ({p80_val:.4f})"),
+        (p85_val, "19_thresh_85th.png", f"Threshold 3: 85th Percentile ({p85_val:.4f}) - Selected"),
+        (p90_val, "20_thresh_90th.png", f"Threshold 4: 90th Percentile ({p90_val:.4f})")
+    ]
+
+    for thresh_val, filename, title_text in threshold_configs:
+        binarized = (grad_mag > thresh_val).astype(np.float32)
+        save_and_display(binarized, os.path.join(output_dir, filename), title_text)</code></pre>
+
+            <h3>Original Image, Partial Derivatives & Gradient Magnitude</h3>
+            <p>The $D_x$ filter highlights vertical edges (changes across columns), while $D_y$ highlights horizontal edges (changes across rows). Combining them yields the orientation-invariant gradient magnitude map.</p>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="13_cameraman_original.png" alt="Original Cameraman">
+                    <p>Original Image</p>
+                    <span>Cameraman input</span>
+                </div>
+                <div class="image-card">
+                    <img src="14_cameraman_dx.png" alt="Dx Derivative">
+                    <p>D_x Derivative</p>
+                    <span>Horizontal gradient (vertical edges)</span>
+                </div>
+                <div class="image-card">
+                    <img src="15_cameraman_dy.png" alt="Dy Derivative">
+                    <p>D_y Derivative</p>
+                    <span>Vertical gradient (horizontal edges)</span>
+                </div>
+                <div class="image-card">
+                    <img src="16_cameraman_grad_mag.png" alt="Gradient Magnitude">
+                    <p>Gradient Magnitude</p>
+                    <span>$\sqrt{D_x^2 + D_y^2}$</span>
+                </div>
+            </div>
+
+            <h3>Threshold Selection & Analysis</h3>
+            <p>Finding the right threshold is a trade-off between suppressing high-frequency background noise (such as grass texture) and preserving structural edges (like the camera body, tripod legs, and skyline). Four percentile-based thresholds were tested:</p>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="17_thresh_70th.png" alt="70th Percentile Threshold">
+                    <p>70th Percentile</p>
+                    <span>Too Low: Captures excessive noise in the grass</span>
+                </div>
+                <div class="image-card">
+                    <img src="18_thresh_80th.png" alt="80th Percentile Threshold">
+                    <p>80th Percentile</p>
+                    <span>Better: Retains main contours but still shows noise</span>
+                </div>
+                <div class="image-card">
+                    <img src="19_thresh_85th.png" alt="85th Percentile Threshold">
+                    <p>85th Percentile (Selected)</p>
+                    <span>Optimal: Balanced noise reduction & edge detail</span>
+                </div>
+                <div class="image-card">
+                    <img src="20_thresh_90th.png" alt="90th Percentile Threshold">
+                    <p>90th Percentile</p>
+                    <span>Too High: Loses faint structural lines & tripod legs</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 18px;"><strong>Selected Threshold Justification:</strong> The <strong>85th percentile threshold</strong> was chosen as the optimal choice. It successfully eliminates most high-frequency background noise in the grass field while maintaining sharp, continuous outlines for the subject, tripod, camera, and horizon. The 70th and 80th percentiles contain noticeable noise artifacts, whereas the 90th percentile is too aggressive and cuts off key structural details of the tripod and coat.</p>
+        </div>
+
+        <!-- Part 1.3 -->
+        <div class="card">
+            <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
+            <p>Comparing two methods: (1) smoothing followed by finite difference derivative, vs. (2) convolving the image with pre-computed Derivative of Gaussian (DoG) filters.</p>
+
+            <h3>Implementation</h3>
+<pre><code>def create_2d_gaussian(kernel_size: int, sigma: float) -> np.ndarray:
+    gaussian_1d = cv2.getGaussianKernel(kernel_size, sigma)
+    gaussian_2d = np.outer(gaussian_1d, gaussian_1d.T)
+    return gaussian_2d
+
+def run_part_1_3(output_dir: str):
+    img_path = "cameraman.png"
+    cameraman = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE).astype(np.float64) / 255.0
+    
+    gaussian_kernel = create_2d_gaussian(15, 2.0)
+    Dx = np.array([[1, 0, -1]], dtype=np.float64)
+    Dy = np.array([[1], [0], [-1]], dtype=np.float64)
+
+    # Method 1: Smooth then Derivative
+    smoothed_img = scipy.signal.convolve2d(cameraman, gaussian_kernel, mode='same', boundary='fill', fillvalue=0)
+    dx_method1 = scipy.signal.convolve2d(smoothed_img, Dx, mode='same', boundary='fill', fillvalue=0)
+    dy_method1 = scipy.signal.convolve2d(smoothed_img, Dy, mode='same', boundary='fill', fillvalue=0)
+    grad_mag_method1 = np.sqrt(dx_method1**2 + dy_method1**2)
+
+    # Method 2: Derivative of Gaussian Filters
+    DoG_x = scipy.signal.convolve2d(gaussian_kernel, Dx, mode='full')
+    DoG_y = scipy.signal.convolve2d(gaussian_kernel, Dy, mode='full')
+    dx_method2 = scipy.signal.convolve2d(cameraman, DoG_x, mode='same', boundary='fill', fillvalue=0)
+    dy_method2 = scipy.signal.convolve2d(cameraman, DoG_y, mode='same', boundary='fill', fillvalue=0)
+    grad_mag_method2 = np.sqrt(dx_method2**2 + dy_method2**2)
+
+    threshold = 0.07
+    binarized_edges_method1 = (grad_mag_method1 > threshold).astype(np.float32)
+    binarized_edges_method2 = (grad_mag_method2 > threshold).astype(np.float32)</code></pre>
+
+            <h3>Method Comparison</h3>
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="21_gaussian_kernel.png" alt="Gaussian Kernel">
+                    <p>Gaussian Kernel</p>
+                    <span>15x15, σ=2.0</span>
+                </div>
+                <div class="image-card">
+                    <img src="22_cameraman_smoothed.png" alt="Smoothed Cameraman">
+                    <p>Smoothed Image</p>
+                    <span>Low-pass Filtered</span>
+                </div>
+                <div class="image-card">
+                    <img src="27_dog_x_kernel.png" alt="DoG X Kernel">
+                    <p>DoG X Kernel</p>
+                    <span>G ⊗ Dx</span>
+                </div>
+                <div class="image-card">
+                    <img src="28_dog_y_kernel.png" alt="DoG Y Kernel">
+                    <p>DoG Y Kernel</p>
+                    <span>G ⊗ Dy</span>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="image-card">
+                    <img src="25_method1_grad_mag.png" alt="Method 1 Gradient">
+                    <p>Method 1 Gradient</p>
+                    <span>Smooth → Diff</span>
+                </div>
+                <div class="image-card">
+                    <img src="26_method1_binarized.png" alt="Method 1 Binarized">
+                    <p>Method 1 Edges</p>
+                    <span>Thresholded</span>
+                </div>
+                <div class="image-card">
+                    <img src="29_method2_dx.png" alt="Method 2 Dx">
+                    <p>Method 2 Dx</p>
+                    <span>DoG_x Convolved</span>
+                </div>
+                <div class="image-card">
+                    <img src="31_dog_binarized.png" alt="Method 2 Binarized">
+                    <p>Method 2 Edges</p>
+                    <span>Thresholded</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 class="section-title">Part 2: Frequencies</h2>
+
+        <!-- Part 2.1 -->
+        <div class="card">
+            <h2>Part 2.1: Image Sharpening</h2>
+            <p>Using Unsharp Masking ($I_{sharp} = I + \alpha (I - G \otimes I)$) to boost high-frequency components.</p>
+
+            <h3>Implementation</h3>
+<pre><code>def unsharp_mask_single_kernel(img: np.ndarray, gaussian_kernel: np.ndarray, alpha: float) -> np.ndarray:
+    k_size = gaussian_kernel.shape[0]
+    e = np.zeros((k_size, k_size), dtype=np.float64)
+    e[k_size // 2, k_size // 2] = 1.0
+    unsharp_kernel = (1.0 + alpha) * e - alpha * gaussian_kernel
+    
+    if img.ndim == 3:
+        sharpened_channels = [scipy.signal.convolve2d(img[:, :, c], unsharp_kernel, mode='same', boundary='symm') for c in range(3)]
+        sharpened = np.stack(sharpened_channels, axis=2)
     else:
-        pad_y = 2 * padding
-        pad_x = 2 * padding
-    
-    # out_array
-    output_height = im1_height - im2_height + 1 + pad_y
-    output_width = im1_width - im2_width + 1 + pad_x
-    
-    # 0 fill from spec
-    output = np.zeros((output_height, output_width))
+        sharpened = scipy.signal.convolve2d(img, unsharp_kernel, mode='same', boundary='symm')
+    return np.clip(sharpened, 0.0, 1.0)</code></pre>
+        </div>
 
-    for i in range(output_height):
-        for j in range(output_width):
-            temp_sum = 0
-            for k in range(im2_height):
-                for l in range(im2_width):
-                    temp_sum += padded_im1[i+k][j+l] * im2[k][l]
-            output[i][j] = temp_sum
-            
-    return output</code></pre>
+        <!-- Part 2.2 -->
+        <div class="card">
+            <h2>Part 2.2: Hybrid Images</h2>
+            <p>Combining high-pass filtered and low-pass filtered images to create optical illusions that change perception with distance.</p>
 
-            <h3>2. Two-Loop Implementation</h3>
-<pre><code>def convolve2d_fast(im1, im2, padding=0):
-    im2_height, im2_width = im2.shape
-    im1_height, im1_width = im1.shape
-    
-    # pad
-    padded_im1 = np.pad(im1, padding, mode='constant', constant_values=0)
+            <h3>Implementation</h3>
+<pre><code>def process_hybrid_pair(img1_high_path: str, img2_low_path: str, sigma_high: float, sigma_low: float, 
+                        prefix: str, output_dir: str, gain: float = 1.0, compute_fft: bool = False):
+    im1_high = plt.imread(img1_high_path).astype(np.float64) / 255.0
+    im2_low = plt.imread(img2_low_path).astype(np.float64) / 255.0
 
-    # get output dimensions based on padding type
-    if isinstance(padding, tuple):
-        pad_y = padding[0][0] + padding[0][1]
-        pad_x = padding[1][0] + padding[1][1]
-    else:
-        pad_y = 2 * padding
-        pad_x = 2 * padding
+    im1_aligned, im2_aligned = align_images(im1_high, im2_low)
 
-    # out_array
-    output_height = im1_height - im2_height + 1 + pad_y
-    output_width = im1_width - im2_width + 1 + pad_x
-    
-    # 0 fill from spec
-    output = np.zeros((output_height, output_width))
+    low_freq = apply_gaussian_blur(im2_aligned, sigma_low)
+    im1_blurred = apply_gaussian_blur(im1_aligned, sigma_high)
+    high_freq = im1_aligned - im1_blurred
 
-    for i in range(output_height):
-        for j in range(output_width):
-            output[i][j] = np.sum(padded_im1[i:i+im2_height, j:j+im2_width] * im2)
-    
-    return output</code></pre>
+    hybrid = np.clip(low_freq + gain * high_freq, 0.0, 1.0)
+    save_multiscale_pyramid(hybrid, os.path.join(output_dir, f"{prefix}_06_multiscale.png"))</code></pre>
 
-            <h3>Runtime Analysis & Boundary Handling</h3>
-            <ul>
-                <li><strong>Four Loop Implementation:</strong> Has a time complexity of O(H×W×K×L) where H,W represent image dimensions and K,L represent kernel dimensions. The explicit nested loops make the algorithm clear, but execution is computationally expensive due to pure Python overhead.</li>
-                <li><strong>Two Loop Implementation:</strong> Achieves significant speed improvements with O(H×W) outer loop complexity. It uses <code>numpy.sum()</code> for vectorized matrix element-wise multiplication on kernel patches, leveraging optimized underlying C libraries.</li>
-                <li><strong>scipy.signal.convolve2d:</strong> A highly optimized implementation achieving a 10-100x speedup. It automatically switches to FFT-based convolution for larger filter kernels.</li>
-                <li><strong>Boundary Handling:</strong> Zero padding preserves output dimensions (same mode) and prevents edge artifacts. All three functions produce identical output images when given the same padding.</li>
-            </ul>
-
-            <!-- Inputs -->
-            <h3>Original Input Images</h3>
+            <h3>Hybrid Results & Fourier Analysis</h3>
             <div class="image-grid">
                 <div class="image-card">
-                    <img src="01_original_color.png" alt="Original Selfie Color">
-                    <p>Original Selfie</p>
-                    <span>Color Input</span>
+                    <img src="35_nutmeg_derek_01_high_input_aligned.png" alt="Nutmeg Aligned">
+                    <p>Nutmeg (High SF)</p>
+                    <span>High Pass Input</span>
                 </div>
                 <div class="image-card">
-                    <img src="02_selfie_grayscale.png" alt="Grayscale Selfie">
-                    <p>Selfie Grayscale</p>
-                    <span>Preprocessed Input</span>
+                    <img src="35_nutmeg_derek_02_low_input_aligned.png" alt="Derek Aligned">
+                    <p>Derek (Low SF)</p>
+                    <span>Low Pass Input</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_05_hybrid.png" alt="Nutmeg-Derek Hybrid">
+                    <p>Hybrid Image</p>
+                    <span>Combined Output</span>
+                </div>
+                <div class="image-card">
+                    <img src="35_nutmeg_derek_11_fft_hybrid.png" alt="FFT Hybrid">
+                    <p>FFT Spectrum</p>
+                    <span>Hybrid Magnitude</span>
                 </div>
             </div>
+        </div>
 
-            <!-- 9x9 Box Filter -->
-            <h3>9×9 Box Filter Results</h3>
-            <p>All three implementations produce identical results, confirming correctness:</p>
+        <!-- Part 2.3 & 2.4 -->
+        <div class="card">
+            <h2>Part 2.3 & 2.4: Gaussian & Laplacian Stacks & Multiresolution Blending</h2>
+            <p>Decomposing images into frequency bands using Laplacian stacks and blending them seamlessly with a Gaussian mask stack (e.g., the Oraple).</p>
+
+            <h3>Implementation</h3>
+<pre><code>def build_gaussian_stack(img: np.ndarray, num_levels: int = 5, initial_sigma: float = 2.0) -> list:
+    stack = [img.copy()]
+    for k in range(num_levels):
+        sigma = initial_sigma * (2 ** k)
+        k_size = int(6 * sigma + 1)
+        if k_size % 2 == 0:
+            k_size += 1
+        g1d = cv2.getGaussianKernel(k_size, sigma)
+        g2d = np.outer(g1d, g1d.T)
+
+        if img.ndim == 3:
+            blurred = np.zeros_like(img)
+            for c in range(3):
+                blurred[:, :, c] = scipy.signal.convolve2d(img[:, :, c], g2d, mode='same', boundary='symm')
+        else:
+            blurred = scipy.signal.convolve2d(img, g2d, mode='same', boundary='symm')
+
+        stack.append(np.clip(blurred, 0.0, 1.0))
+    return stack
+
+def build_laplacian_stack(gaussian_stack: list) -> list:
+    laplacian_stack = []
+    num_levels = len(gaussian_stack) - 1
+    for k in range(num_levels):
+        laplacian = gaussian_stack[k] - gaussian_stack[k + 1]
+        laplacian_stack.append(laplacian)
+    laplacian_stack.append(gaussian_stack[-1].copy())
+    return laplacian_stack
+
+def blend_laplacian_stacks(laplacian_A: list, laplacian_B: list, mask_gaussian_stack: list) -> tuple:
+    blended_stack = []
+    stack_A_levels = []
+    stack_B_levels = []
+
+    for l_a, l_b, g_m in zip(laplacian_A, laplacian_B, mask_gaussian_stack):
+        if l_a.ndim == 3 and g_m.ndim == 2:
+            g_m = np.repeat(g_m[:, :, np.newaxis], 3, axis=2)
+
+        level_A = l_a * g_m
+        level_B = l_b * (1.0 - g_m)
+        blended_level = level_A + level_B
+
+        stack_A_levels.append(level_A)
+        stack_B_levels.append(level_B)
+        blended_stack.append(blended_level)
+
+    return blended_stack, stack_A_levels, stack_B_levels
+
+def reconstruct_from_stack(laplacian_stack: list) -> np.ndarray:
+    reconstructed = np.sum(laplacian_stack, axis=0)
+    return np.clip(reconstructed, 0.0, 1.0)</code></pre>
+
+            <h3>Stack Visualizations</h3>
             <div class="image-grid">
                 <div class="image-card">
-                    <img src="03_box9x9_4loops.png" alt="9x9 Box Filter 4 Loops">
-                    <p>Four Loop Method</p>
-                    <span>Slowest execution</span>
+                    <img src="38_apple_gaussian_stack.png" alt="Apple Gaussian Stack">
+                    <p>Apple - Gaussian Stack</p>
+                    <span>Multi-scale blur</span>
                 </div>
                 <div class="image-card">
-                    <img src="04_box9x9_2loops.png" alt="9x9 Box Filter 2 Loops">
-                    <p>Two Loop Method</p>
-                    <span>Vectorized NumPy</span>
-                </div>
-                <div class="image-card">
-                    <img src="05_box9x9_scipy.png" alt="9x9 Box Filter SciPy">
-                    <p>scipy.signal.convolve2d</p>
-                    <span>Fastest implementation</span>
+                    <img src="39_apple_laplacian_stack.png" alt="Apple Laplacian Stack">
+                    <p>Apple - Laplacian Stack</p>
+                    <span>Band-pass frequencies</span>
                 </div>
             </div>
-
-            <!-- Dx Finite Difference -->
-            <h3>D_x Finite Difference (Vertical Edge Detection)</h3>
-            <p>Detects vertical edges by calculating horizontal gradients using kernel <code>[[1, 0, -1]]</code>. Sharp vertical details like the background window blinds are highlighted.</p>
             <div class="image-grid">
                 <div class="image-card">
-                    <img src="06_dx_4loops.png" alt="Dx 4 Loops">
-                    <p>Four Loop Method</p>
+                    <img src="40_orange_gaussian_stack.png" alt="Orange Gaussian Stack">
+                    <p>Orange - Gaussian Stack</p>
+                    <span>Multi-scale blur</span>
                 </div>
                 <div class="image-card">
-                    <img src="07_dx_2loops.png" alt="Dx 2 Loops">
-                    <p>Two Loop Method</p>
-                </div>
-                <div class="image-card">
-                    <img src="08_dx_scipy.png" alt="Dx SciPy">
-                    <p>scipy.signal.convolve2d</p>
+                    <img src="41_orange_laplacian_stack.png" alt="Orange Laplacian Stack">
+                    <p>Orange - Laplacian Stack</p>
+                    <span>Band-pass frequencies</span>
                 </div>
             </div>
-
-            <!-- Dy Finite Difference -->
-            <h3>D_y Finite Difference (Horizontal Edge Detection)</h3>
-            <p>Detects horizontal edges by calculating vertical gradients using kernel <code>[[1], [0], [-1]]</code>.</p>
-            <div class="image-grid">
-                <div class="image-card">
-                    <img src="09_dy_4loops.png" alt="Dy 4 Loops">
-                    <p>Four Loop Method</p>
-                </div>
-                <div class="image-card">
-                    <img src="10_dy_2loops.png" alt="Dy 2 Loops">
-                    <p>Two Loop Method</p>
-                </div>
-                <div class="image-card">
-                    <img src="11_dy_scipy.png" alt="Dy SciPy">
-                    <p>scipy.signal.convolve2d</p>
-                </div>
-            </div>
-
-            <!-- 25x25 Box Filter -->
-            <h3>25×25 Box Filter Results</h3>
-            <p>The blur effect from the 9×9 box filter was subtle, so a larger 25×25 kernel was used to create a noticeably stronger low-pass blur effect.</p>
-            <div class="image-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 400px)); justify-content: center;">
-                <div class="image-card">
-                    <img src="12_box25x25.png" alt="25x25 Box Filter">
-                    <p>25×25 Box Filter</p>
-                    <span>Enhanced blurring effect</span>
-                </div>
-            </div>
-
         </div>
 
     </main>
