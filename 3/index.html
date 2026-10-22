@@ -468,7 +468,7 @@ def euler_sample(x_start, t_start, step_size, velocity):
             <p>Below is the full 25-step trajectory starting from $t = 0.50$ through $t = 1.00$, displaying intermediate states at every step:</p>
 
             <div class="img-container">
-                <img src="trajectory.jpg" alt="Euler Sampling Trajectory from t=0.50 to t=1.00" class="display-img">
+                <img src="trajectory.png" alt="Euler Sampling Trajectory from t=0.50 to t=1.00" class="display-img">
                 <div class="img-caption">Euler Denoising Trajectory: Intermediate updates progressing from $t = 0.50$ to $t = 1.00$.</div>
             </div>
 
@@ -476,7 +476,7 @@ def euler_sample(x_start, t_start, step_size, velocity):
             <p>I evaluated all three denoising approaches on the exact same $t = 0.50$ noisy input:</p>
 
             <div class="img-container">
-                <img src="comparison.jpg" alt="Comparison: Original, Blur, One Step, Euler" class="display-img">
+                <img src="comparison.png" alt="Comparison: Original, Blur, One Step, Euler" class="display-img">
                 <div class="img-caption">Side-by-side comparison on the $t = 0.50$ input: Original | Gaussian Blur ($\sigma = 2.0$) | One-Step Estimate | Euler Denoising ($25$ steps)</div>
             </div>
 
@@ -485,6 +485,78 @@ def euler_sample(x_start, t_start, step_size, velocity):
                 While one-step denoising yields a clean picture, it produces slightly smooth, averaged details along fine edges. 
                 Iterative Euler integration follows the curving velocity field step by step, recovering significantly sharper window moldings, crisp stone textures, and detailed foliage across the building façade.
             </p>
+        </div>
+        <!-- Section 1.6 -->
+        <div class="card">
+            <h2>1.6 Generating Images from Noise</h2>
+            <p>
+                In Section 1.5, I used the flow model to denoise an existing photograph. 
+                Beyond editing real inputs, I can also generate images entirely from scratch using the same <code>euler_sample</code> integration function by setting $t_{\text{start}} = 0$ and passing pure Gaussian noise $x_0 \sim \mathcal{N}(0, I)$.
+            </p>
+            <p>
+                I generated 5 images starting from random noise tensors across seeds 180 to 184, running Euler sampling up to $t = 1.0$ conditioned on the generic text prompt <em>"a high quality photo"</em>.
+            </p>
+
+            <div class="img-container">
+                <img src="conditional_samples.png" alt="Conditional Samples from pure noise (Seeds 180-184)" class="display-img">
+                <div class="img-caption">Generated samples from pure noise at $t = 0$ using seeds 180–184 with prompt <em>"a high quality photo"</em> without guidance.</div>
+            </div>
+
+            <p>
+                <strong>Discussion & Observations:</strong> 
+                The generic prompt <em>"a high quality photo"</em> strongly biases the model toward human portraits[cite: 14]. 
+                Without guidance, the unconditional sampling quality is noticeably inconsistent and prone to anatomical artifacts:
+            </p>
+            <ul>
+                <li><strong>Seed 180:</strong> Fails to render facial features entirely, leaving a smooth blank face[cite: 14].</li>
+                <li><strong>Seed 181:</strong> Generates a human torso and head, but exhibits distorted skin texture and unnatural shoulders[cite: 14].</li>
+                <li><strong>Seed 182:</strong> Produces a fairly clear woman's portrait, though slightly soft[cite: 14].</li>
+                <li><strong>Seed 183:</strong> Yields a heavily distorted, texture-melted figure[cite: 14].</li>
+                <li><strong>Seed 184:</strong> Results in the cleanest and most realistic man's portrait among the set[cite: 14].</li>
+            </ul>
+            <p>
+                These results illustrate that standard unguided sampling from a general text prompt struggles with prompt alignment and visual consistency. In Section 2, I explore Classifier-Free Guidance (CFG) to resolve these issues.
+            </p>
+        </div>
+        <!-- Section 2.1 -->
+        <div class="card">
+            <h2>2.1 Classifier-Free Guidance (CFG)</h2>
+            <p>
+                As observed in Section 1.6, unguided generation often yields distorted faces and poor prompt alignment[cite: 14]. 
+                To improve image quality and adhere more strongly to the text prompt, I implement Classifier-Free Guidance (CFG)[cite: 14].
+            </p>
+            <p>
+                At each step, I evaluate two velocity predictions using the same image state $x_t$ and timestep $t$: a conditional prediction $v_c = v_\theta(x_t, t, c)$ using the prompt <em>"a high quality photo"</em>, and an unconditional prediction $v_u = v_\theta(x_t, t, \emptyset)$ using an empty-string prompt $c_{\text{uncond}} = \text{""}$[cite: 14]. 
+                I then combine them using guidance scale $w = 7.0$:
+            </p>
+
+            <div class="formula-card">
+                $$v_{\text{cfg}} = v_c + w(v_c - v_u)$$
+            </div>
+
+            <p>
+                When $w = 0$, this formula reduces exactly to plain conditional velocity $v_c$[cite: 14]. 
+                Setting $w > 0$ extrapolates away from the unconditional prediction toward the prompt direction[cite: 14].
+            </p>
+
+            <pre><code>def cfg_velocity(x, t, condition, w, predict_velocity, null_condition=""):
+    vc = predict_velocity(x, t, condition)
+    nc = predict_velocity(x, t, null_condition)
+    return vc + w * (vc - nc)</code></pre>
+
+            <div class="img-container">
+                <img src="cfg_samples.png" alt="CFG Samples with w=7 for seeds 180-184" class="display-img">
+                <div class="img-caption">Classifier-Free Guidance samples ($w = 7.0$) using the exact same initial noise seeds (180–184) as Section 1.6 with prompt <em>"a high quality photo"</em>[cite: 14].</div>
+            </div>
+
+            <p>
+                <strong>Discussion & Comparison with Section 1.6:</strong>
+            </p>
+            <ul>
+                <li><strong>Quality & Clarity:</strong> Applying CFG dramatically boosts image fidelity[cite: 14]. The distorted or faceless outputs from Section 1.6 (such as the melted features in Seed 180 and Seed 183) are transformed into crisp, in-focus human headshots with clear facial details and studio lighting[cite: 14].</li>
+                <li><strong>Diversity Trade-Off:</strong> While quality improves, output diversity decreases noticeably[cite: 14]. All five samples converge toward formal, front-facing studio portraits against plain backgrounds[cite: 14].</li>
+                <li><strong>Noise Spatial Preservation:</strong> The underlying spatial layout remains anchored to the initial noise seed[cite: 14]. For example, Seed 182 retains the pose with a hand positioned near the jawline in both unguided and guided versions[cite: 14].</li>
+            </ul>
         </div>
 
     </main>
