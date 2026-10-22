@@ -432,6 +432,60 @@
                 <strong>Discussion:</strong> Analyzing the error heatmaps reveals that prediction error is highest at $t = 0.25$ and consistently concentrated along sharp architectural boundaries, window frames, and high-frequency edges of the VLSB library. As $t$ increases to $0.75$, the magnitude of $(1 - t)$ shrinks, and the model's velocity estimate aligns much more closely with the ground-truth update, resulting in significantly lower RMS error across the whole image canvas.
             </p>
         </div>
+        <!-- Section 1.5 -->
+        <div class="card">
+            <h2>1.5 Iterative Denoising with Euler Sampling</h2>
+            <p>
+                One-step denoising can be inaccurate because the learned velocity field changes non-linearly as the image moves along the path. 
+                To achieve more accurate reconstruction, I take small numerical steps, recompute the velocity prediction at each intermediate state, and integrate forward using Euler updates:
+            </p>
+
+            <div class="formula-card">
+                $$x_{t + \Delta t} = x_t + \Delta t \cdot v_\theta(x_t, t, c)$$
+            </div>
+
+            <p>
+                Starting from the saved noisy VLSB library image at $t = 0.50$, I run $25$ Euler steps using step size $h = 0.02$. 
+                If the step size does not divide $(1 - t_{\text{start}})$ evenly, I shorten the final integration step so that sampling terminates exactly at $t = 1.0$. 
+                I verified the implementation analytically on a constant velocity field $v(x, t) = 1$, ensuring the final state equaled $x_{\text{start}} + (1 - t_{\text{start}})$.
+            </p>
+
+            <pre><code>@torch.inference_mode()
+def euler_sample(x_start, t_start, step_size, velocity):
+    x = x_start
+    t = t_start
+    num_steps = math.ceil(round((1 - t_start) / step_size, 6))
+    states = [(t, x)]
+    for i in range(1, num_steps + 1):
+        t_next = 1.0 if i == num_steps else t_start + i * step_size
+        x = x + (t_next - t) * velocity(x, t)
+        t = t_next
+        if i % 5 == 0 or i == num_steps:
+            states.append((t, x))
+    return x, states</code></pre>
+
+            <h3>Sampling Trajectory</h3>
+            <p>Below is the full 25-step trajectory starting from $t = 0.50$ through $t = 1.00$, displaying intermediate states at every step:</p>
+
+            <div class="img-container">
+                <img src="trajectory.jpg" alt="Euler Sampling Trajectory from t=0.50 to t=1.00" class="display-img">
+                <div class="img-caption">Euler Denoising Trajectory: Intermediate updates progressing from $t = 0.50$ to $t = 1.00$.</div>
+            </div>
+
+            <h3>Denoising Method Comparison</h3>
+            <p>I evaluated all three denoising approaches on the exact same $t = 0.50$ noisy input:</p>
+
+            <div class="img-container">
+                <img src="comparison.jpg" alt="Comparison: Original, Blur, One Step, Euler" class="display-img">
+                <div class="img-caption">Side-by-side comparison on the $t = 0.50$ input: Original | Gaussian Blur ($\sigma = 2.0$) | One-Step Estimate | Euler Denoising ($25$ steps)</div>
+            </div>
+
+            <p>
+                <strong>Discussion:</strong> Gaussian blur merely smooths out the high-frequency noise variance while blurring out the window columns and architectural relief. 
+                While one-step denoising yields a clean picture, it produces slightly smooth, averaged details along fine edges. 
+                Iterative Euler integration follows the curving velocity field step by step, recovering significantly sharper window moldings, crisp stone textures, and detailed foliage across the building façade.
+            </p>
+        </div>
 
     </main>
 
