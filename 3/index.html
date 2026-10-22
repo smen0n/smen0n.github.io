@@ -762,6 +762,87 @@ def euler_sample(x_start, t_start, step_size, velocity):
                 Flipping the canvas $180^\circ$ reveals a horse, where the cabin rooftops transform into the horse's legs and body contours, and the mountain ridge becomes the horse's neck and head.
             </p>
         </div>
+        <!-- Section 3.4 -->
+        <div class="card">
+            <h2>3.4 Hybrid Images</h2>
+            <p>
+                In this section, I implemented Factorized Diffusion to generate hybrid images using flow models. 
+                A hybrid image changes its perceived subject depending on viewing distance: up close, high-frequency details dominate, while from a distance, low-frequency structural shapes dominate.
+            </p>
+            <p>
+                To create a hybrid image, I compute a composite velocity estimate $v_{\text{composite}}$ at each Euler step by combining the low frequencies of a velocity prediction $v_1$ (conditioned on low-frequency prompt $c_1$) with the high frequencies of a velocity prediction $v_2$ (conditioned on high-frequency prompt $c_2$). 
+                The high-pass component is obtained by subtracting the low-passed prediction from the raw prediction:
+            </p>
+
+            <div class="formula-card">
+                $$v_1 = \text{cfg\_velocity}(x_t, t, c_1), \quad v_2 = \text{cfg\_velocity}(x_t, t, c_2)$$
+                $$v_{\text{composite}} = \text{LowPass}(v_1) + \Big(v_2 - \text{LowPass}(v_2)\Big)$$
+            </div>
+
+            <p>
+                For the low-pass filter $\text{LowPass}(\cdot)$, I used a Gaussian blur with kernel size $265 \times 265$ and standard deviation $\sigma = 16$ on $512 \times 512$ spatial dimensions.
+            </p>
+
+            <pre><code>import torchvision.transforms.functional as TF
+
+def make_hybrids(x_start, prompt_low, prompt_high, step_size=0.02, w=7.0):
+    x = x_start
+    num_steps = int(1.0 / step_size)
+    for i in range(num_steps):
+        t = i * step_size
+        
+        # Velocity predictions for low and high frequency prompts
+        v1 = cfg_velocity(x, t, prompt_low, w)
+        v2 = cfg_velocity(x, t, prompt_high, w)
+        
+        # Frequency separation using Gaussian Blur (kernel_size=265, sigma=16)
+        v1_low = TF.gaussian_blur(v1, kernel_size=[265, 265], sigma=[16.0, 16.0])
+        v2_low = TF.gaussian_blur(v2, kernel_size=[265, 265], sigma=[16.0, 16.0])
+        v2_high = v2 - v2_low
+        
+        # Composite velocity update
+        v_composite = v1_low + v2_high
+        x = x + step_size * v_composite
+    return x</code></pre>
+
+            <h3>Hybrid 1: Waterfall & Skull</h3>
+            <div class="img-container">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 30px; margin: 20px 0;">
+                    <div style="text-align: center; max-width: 450px;">
+                        <img src="hybrid_0.jpg" alt="Waterfall and Skull hybrid full size" class="display-img" style="width: 100%;">
+                        <div class="img-caption"><strong>Near View:</strong> <em>"a lithograph of a waterfall"</em></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <img src="hybrid_0.jpg" alt="Waterfall and Skull hybrid distant view" class="display-img" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                        <div class="img-caption"><strong>Distant View:</strong><br><em>"a lithograph of a skull"</em></div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                <strong>Observations (Hybrid 1):</strong> 
+                Up close, high frequencies reveal fine water streams, rocky cliffs, and foliage from <em>"a lithograph of a waterfall"</em>. 
+                When stepping back or viewing the thumbnail, the low-frequency light-and-dark distribution aligns to form <em>"a lithograph of a skull"</em>, where the dark cliff edges form eye sockets and the central falling water represents the bridge of the nose.
+            </p>
+
+            <h3>Hybrid 2: Forest & Cat</h3>
+            <div class="img-container">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 30px; margin: 20px 0;">
+                    <div style="text-align: center; max-width: 450px;">
+                        <img src="hybrid_1.jpg" alt="Forest and Cat hybrid full size" class="display-img" style="width: 100%;">
+                        <div class="img-caption"><strong>Near View:</strong> <em>"a lithograph of a forest"</em></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <img src="hybrid_1.jpg" alt="Forest and Cat hybrid distant view" class="display-img" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                        <div class="img-caption"><strong>Distant View:</strong><br><em>"a lithograph of a cat"</em></div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                <strong>Observations (Hybrid 2):</strong> 
+                In the near view, the high frequencies detail individual tree trunks, bark lines, and pine needles from <em>"a lithograph of a forest"</em>. 
+                From a distance, the macro structure formed by the tall central tree trunks and round canopy tops merges into the silhouette of <em>"a lithograph of a cat"</em>, with top foliage tufts acting as cat ears.
+            </p>
+        </div>
         <!-- Section 1.1 & 1.2 -->
         <div class="card">
             <h2>1.1 & 1.2 Denoising UNet Architecture and Noising Process</h2>
