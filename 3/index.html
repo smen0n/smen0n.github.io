@@ -558,6 +558,48 @@ def euler_sample(x_start, t_start, step_size, velocity):
                 <li><strong>Noise Spatial Preservation:</strong> The underlying spatial layout remains anchored to the initial noise seed[cite: 14]. For example, Seed 182 retains the pose with a hand positioned near the jawline in both unguided and guided versions[cite: 14].</li>
             </ul>
         </div>
+        <!-- Section 3.1 -->
+        <div class="card">
+            <h2>3.1 Image-to-Image Editing (SDEdit)</h2>
+            <p>
+                In Section 1.5, I added noise to a clean photograph and ran iterative Euler sampling to denoise it. 
+                Following the SDEdit algorithm, this process can be leveraged for creative image editing: by taking an existing photograph, adding noise up to a starting timestep $t_{\text{start}}$, and using Classifier-Free Guidance ($w = 7.0$, step size $h = 0.02$) with the prompt <em>"a high quality photo"</em>, the flow model is forced to project the noisy representation back onto the natural image manifold.
+            </p>
+            <p>
+                The starting noise level $t_{\text{start}}$ directly controls the edit distance:
+            </p>
+            <ul>
+                <li><strong>Low $t_{\text{start}}$ (e.g., $0.02 \le t_{\text{start}} \le 0.06$):</strong> The image is heavily corrupted by noise. The flow model has high creative freedom, hallucinating completely new structures while only preserving coarse color or composition cues.</li>
+                <li><strong>High $t_{\text{start}}$ (e.g., $0.25 \le t_{\text{start}} \le 0.50$):</strong> More of the original image structure is retained, so the model only refines textures, cleans up fine details, and stays very faithful to the original target.</li>
+            </ul>
+
+            <h3>Campanile Edits</h3>
+            <div class="img-container">
+                <img src="edit_campanile.jpg" alt="SDEdit Campanile results" class="display-img">
+                <div class="img-caption">SDEdit on the Berkeley Campanile across starting timesteps $t_{\text{start}} \in \{0.02, 0.04, 0.06, 0.10, 0.14, 0.25, 0.50\}$.</div>
+            </div>
+            <p>
+                <strong>Observations (Campanile):</strong> At low starting times ($t_{\text{start}} = 0.02$ to $0.06$), the model replaces the architectural tower with abstract smooth cones and obelisk-like structures. As $t_{\text{start}}$ increases to $0.10$ and $0.14$, the tower form emerges without the clock face or intricate stone moldings. By $t_{\text{start}} = 0.50$, the original clock, stone textures, and surrounding trees are restored almost identically.
+            </p>
+
+            <h3>Custom Image 1: VLSB Berkeley Library</h3>
+            <div class="img-container">
+                <img src="edit_my_image_1.jpg" alt="SDEdit VLSB Library results" class="display-img">
+                <div class="img-caption">SDEdit on the VLSB Berkeley Library across starting timesteps $t_{\text{start}} \in \{0.02, 0.04, 0.06, 0.10, 0.14, 0.25, 0.50\}$.</div>
+            </div>
+            <p>
+                <strong>Observations (VLSB Library):</strong> At $t_{\text{start}} = 0.02$, the extreme noise causes the model to hallucinate an abstract indoor display monitor or slide frame. At $t_{\text{start}} = 0.04$ and $0.06$, it interprets the dark vertical window stripes as modern architectural louvers or building facades. By $t_{\text{start}} \ge 0.25$, the full classical facade of the VLSB library, complete with its grand columns, window panes, and front lawn, is reconstructed cleanly.
+            </p>
+
+            <h3>Custom Image 2: Jack-o'-lantern Pumpkin</h3>
+            <div class="img-container">
+                <img src="edit_my_image_2.jpg" alt="SDEdit Pumpkin results" class="display-img">
+                <div class="img-caption">SDEdit on a carved Jack-o'-lantern pumpkin across starting timesteps $t_{\text{start}} \in \{0.02, 0.04, 0.06, 0.10, 0.14, 0.25, 0.50\}$.</div>
+            </div>
+            <p>
+                <strong>Observations (Pumpkin / Tomato Transformation):</strong> At very low timesteps ($t_{\text{start}} = 0.02$ to $0.06$), the model completely ignores the carved face and transforms the round orange object into a smooth red tomato held in hands or framed on a table. As $t_{\text{start}}$ increases to $0.10$ and $0.14$, the smooth tomato transitions back into an uncarved orange pumpkin. By $t_{\text{start}} = 0.25$ and $0.50$, the carved Jack-o'-lantern glowing facial features and surrounding Halloween background decor are fully recovered.
+            </p>
+        </div>
 
     </main>
 
