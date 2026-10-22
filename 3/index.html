@@ -350,6 +350,44 @@
                 Classical linear filtering highlights the need for deep generative flow models that can denoise while hallucinating realistic high-frequency detail.
             </p>
         </div>
+        <!-- Section 1.3 -->
+        <div class="card">
+            <h2>1.3 One-Step Denoising</h2>
+            <p>
+                Now we use the pretrained PixNerd flow model to denoise the noisy images. 
+                Given a noisy image state $x_t$, the function <code>predict_velocity(x, t, condition)</code> predicts the path velocity vector $v_\theta(x_t, t, c)$ using the prompt embedding $c$ for <em>"a high quality photo"</em>. 
+                Because the optimal-transport flow matching formulation defines a straight trajectory from noise to target, we can extrapolate directly to the clean endpoint $t = 1$ in a single step:
+            </p>
+
+            <div class="formula-card">
+                $$\hat{x}_1 = x_t + (1 - t)v_\theta(x_t, t, c)$$
+            </div>
+
+            <pre><code>def one_step_denoise(x, t, condition, predict_velocity):
+    return x + (1 - t) * predict_velocity(x, t, condition)</code></pre>
+
+            <div class="img-container">
+                <div style="display: flex; flex-direction: column; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <img src="one_step_0.25.jpg" alt="One step denoise at t=0.25" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.25$</strong> &middot; Original | Noisy Input | One-Step Estimate</div>
+                    </div>
+                    <div>
+                        <img src="one_step_0.5.jpg" alt="One step denoise at t=0.50" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.50$</strong> &middot; Original | Noisy Input | One-Step Estimate</div>
+                    </div>
+                    <div>
+                        <img src="one_step_0.75.jpg" alt="One step denoise at t=0.75" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.75$</strong> &middot; Original | Noisy Input | One-Step Estimate</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>Discussion:</strong> Compared to classical Gaussian blurring, the learned flow model recovers significantly sharper architectural features and realistic surface textures of the VLSB library. 
+                However, when extrapolating across a large time step from $t = 0.25$, the single linear step results in slight over-smoothing along edge boundaries because actual learned flow trajectories are curved. Recomputing velocity at smaller intermediate timesteps will resolve this approximation error.
+            </p>
+        </div>
 
     </main>
 
