@@ -698,6 +698,70 @@ def euler_sample(x_start, t_start, step_size, velocity):
                 By $t_{\text{start}} \ge 0.25$, the jack-o'-lantern's carved eyes, mouth, and indoor background reappear.
             </p>
         </div>
+        <!-- Section 3.3 -->
+        <div class="card">
+            <h2>3.3 Visual Anagrams</h2>
+            <p>
+                To generate optical illusions with flow models, I implemented Visual Anagrams. 
+                A visual anagram is a single image that depicts one scene when viewed upright, but reveals an entirely different subject when rotated $180^\circ$ upside down.
+            </p>
+            <p>
+                To achieve this, at each Euler step $t$, I evaluate two CFG velocity predictions simultaneously:
+            </p>
+            <ol>
+                <li>I predict velocity $v_1$ on the upright image state $x_t$ using prompt embedding $c_1$.</li>
+                <li>I rotate $x_t$ by $180^\circ$ using transformation $R(x_t)$, predict velocity $v_2$ on the upside-down state using prompt embedding $c_2$, and rotate the velocity tensor back upright using $R^{-1}(v_2)$.</li>
+            </ol>
+            <p>
+                I then average the two velocity estimates to update $x_t$ in the direction that satisfies both prompt constraints simultaneously:
+            </p>
+
+            <div class="formula-card">
+                $$v_1 = \text{cfg\_velocity}(x_t, t, c_1), \quad v_2 = R^{-1}\Big(\text{cfg\_velocity}\big(R(x_t), t, c_2\big)\Big)$$
+                $$v_{\text{final}} = \frac{1}{2}\big(v_1 + v_2\big)$$
+            </div>
+
+            <pre><code>def visual_anagrams(x_start, prompt1_embed, prompt2_embed, step_size=0.02, w=7.0):
+    x = x_start
+    num_steps = int(1.0 / step_size)
+    for i in range(num_steps):
+        t = i * step_size
+        
+        # Upright prediction
+        v1 = cfg_velocity(x, t, prompt1_embed, w)
+        
+        # Rotated 180 prediction
+        x_rot = torch.flip(x, dims=[-2, -1])
+        v2_rot = cfg_velocity(x_rot, t, prompt2_embed, w)
+        v2 = torch.flip(v2_rot, dims=[-2, -1])
+        
+        # Average velocity vector and step forward
+        v_avg = 0.5 * (v1 + v2)
+        x = x + step_size * v_avg
+    return x</code></pre>
+
+            <h3>Illusion 1: Old Man & Campfire</h3>
+            <div class="img-container">
+                <img src="anagram_views_0.png" alt="Visual Anagram 1: Old Man and People around a Campfire" class="display-img">
+                <div class="img-caption">Visual Anagram 1 &middot; <strong>Upright:</strong> <em>"an oil painting of an old man"</em> | <strong>Rotated $180^\circ$:</strong> <em>"an oil painting of people around a campfire"</em></div>
+            </div>
+            <p>
+                <strong>Observations (Illusion 1):</strong> 
+                When viewed upright, the image depicts a textured oil painting of an old man's face with warm highlights along the forehead and nose. 
+                When rotated $180^\circ$ upside down, the bright forehead highlight transforms into a glowing campfire, while the facial folds and beard reinterpret as figures gathered around the fire in the dark.
+            </p>
+
+            <h3>Illusion 2: Snowy Village & Horse</h3>
+            <div class="img-container">
+                <img src="anagram_views_1.png" alt="Visual Anagram 2: Snowy Mountain Village and Horse" class="display-img">
+                <div class="img-caption">Visual Anagram 2 &middot; <strong>Upright:</strong> <em>"a lithograph of a snowy mountain village"</em> | <strong>Rotated $180^\circ$:</strong> <em>"a lithograph of a horse"</em></div>
+            </div>
+            <p>
+                <strong>Observations (Illusion 2):</strong> 
+                In the upright orientation, the lithograph renders a snowy mountain village with wooden cabins and steep peaked roofs in the foreground. 
+                Flipping the canvas $180^\circ$ reveals a horse, where the cabin rooftops transform into the horse's legs and body contours, and the mountain ridge becomes the horse's neck and head.
+            </p>
+        </div>
 
     </main>
 
