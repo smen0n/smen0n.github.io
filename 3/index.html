@@ -762,6 +762,167 @@ def euler_sample(x_start, t_start, step_size, velocity):
                 Flipping the canvas $180^\circ$ reveals a horse, where the cabin rooftops transform into the horse's legs and body contours, and the mountain ridge becomes the horse's neck and head.
             </p>
         </div>
+        <!-- Section 1.1 & 1.2 -->
+        <div class="card">
+            <h2>1.1 & 1.2 Denoising UNet Architecture and Noising Process</h2>
+            <p>
+                To build a single-step denoiser, I implemented a UNet architecture featuring convolutional downsampling and upsampling blocks with skip connections to preserve high-frequency spatial features. 
+                Given a clean MNIST image $x_0 \in \mathbb{R}^{1 \times 28 \times 28}$, I generated training samples $x$ at varying noise levels $\sigma$ according to the additive Gaussian noise process:
+            </p>
+
+            <div class="formula-card">
+                $$x = x_0 + \sigma \epsilon, \quad \epsilon \sim \mathcal{N}(0, I)$$
+            </div>
+
+            <p>
+                I visualized the forward noising process across noise levels $\sigma \in \{0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0\}$ on a clean digit 6 sample:
+            </p>
+
+            <div class="img-container">
+                <img src="download.png" alt="MNIST Noising Process across Sigmas" class="display-img">
+                <div class="img-caption">MNIST Noising Process: Progressively adding Gaussian noise $\sigma \in [0.0, 1.0]$ to a clean target digit.</div>
+            </div>
+        </div>
+
+        <!-- Section 1.2.1 -->
+        <div class="card">
+            <h2>1.2.1 Single-Step UNet Training & Denoising Results</h2>
+            <p>
+                I trained the unconditional UNet (hidden channel dimension $D = 128$) to perform single-step denoising on noisy images $x = x_0 + \sigma \epsilon$ with fixed noise level $\sigma = 0.5$. 
+                The model was optimized using Adam ($\text{learning rate} = 10^{-4}$) over $5$ epochs on the MNIST dataset using batch size $256$ under an $L_2$ reconstruction loss:
+            </p>
+
+            <div class="formula-card">
+                $$\mathcal{L} = \mathbb{E}_{x_0, \epsilon} \left[ \| f_\theta(x_0 + \sigma \epsilon) - x_0 \|_2^2 \right]$$
+            </div>
+
+            <p>
+                Noise was applied dynamically per mini-batch during data loading to prevent overfitting and improve model generalization.
+            </p>
+
+            <h3>Training Loss Curve</h3>
+            <div class="img-container">
+                <img src="download-3.png" alt="Single-step UNet Training Loss Curve" class="display-img">
+                <div class="img-caption">Training loss curve for single-step UNet denoising over 5 epochs ($\sigma = 0.5$).</div>
+            </div>
+
+            <h3>Test Set Denoising Visualizations ($\sigma = 0.5$)</h3>
+            <p>I evaluated the trained model on test set digits at noise level $\sigma = 0.5$ after Epoch 1 and Epoch 5:</p>
+
+            <div class="img-container">
+                <div style="display: flex; flex-direction: column; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <img src="download-1.png" alt="Epoch 1 Denoising Results" class="display-img">
+                        <div class="img-caption"><strong>Epoch 1 Test Results:</strong> Ground Truth | Noisy Input ($\sigma = 0.5$) | Denoised Output</div>
+                    </div>
+                    <div>
+                        <img src="download-2.png" alt="Epoch 5 Denoising Results" class="display-img">
+                        <div class="img-caption"><strong>Epoch 5 Test Results:</strong> Ground Truth | Noisy Input ($\sigma = 0.5$) | Denoised Output</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>Discussion & Findings:</strong> 
+                By Epoch 1, the network learns to suppress high-frequency background noise and recover basic digit contours. 
+                By Epoch 5, the loss curve asymptotes near $0.008$, and the reconstructed test digits exhibit much cleaner stroke boundaries, sharp contrast, and accurate stroke completion even when heavily corrupted at $\sigma = 0.5$.
+            </p>
+        </div>
+        <!-- Section 1.2.2 -->
+        <div class="card">
+            <h2>1.2.2 Out-of-Distribution (OOD) Testing</h2>
+            <p>
+                Because the single-step UNet was trained exclusively on MNIST digits noised at a fixed level $\sigma = 0.5$, I evaluated how robustly the trained model generalizes when tested on out-of-distribution (OOD) noise levels $\sigma \in \{0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0\}$.
+            </p>
+
+            <div class="img-container">
+                <div style="display: flex; flex-direction: column; gap: 16px; margin: 20px 0;">
+                    <div>
+                        <img src="download-4.png" alt="OOD Denoising sigma=0.0" class="display-img">
+                        <div class="img-caption"><strong>$\sigma = 0.0$ (Clean Input):</strong> Ground Truth | Input | Model Prediction</div>
+                    </div>
+                    <div>
+                        <img src="download-5.png" alt="OOD Denoising sigma=0.2" class="display-img">
+                        <div class="img-caption"><strong>$\sigma = 0.2$:</strong> Ground Truth | Input | Model Prediction</div>
+                    </div>
+                    <div>
+                        <img src="download-6.png" alt="OOD Denoising sigma=0.4" class="display-img">
+                        <div class="img-caption"><strong>$\sigma = 0.4$:</strong> Ground Truth | Input | Model Prediction</div>
+                    </div>
+                    <div>
+                        <img src="download-7.png" alt="OOD Denoising sigma=0.5" class="display-img">
+                        <div class="img-caption"><strong>$\sigma = 0.5$ (In-Distribution Training Level):</strong> Ground Truth | Input | Model Prediction</div>
+                    </div>
+                    <div>
+                        <img src="download-8.png" alt="OOD Denoising sigma=0.6" class="display-img">
+                        <div class="img-caption"><strong>$\sigma = 0.6$:</strong> Ground Truth | Input | Model Prediction</div>
+                    </div>
+                    <div>
+                        <img src="download-9.png" alt="OOD Denoising sigma=0.8" class="display-img">
+                        <div class="img-caption"><strong>$\sigma = 0.8$:</strong> Ground Truth | Input | Model Prediction</div>
+                    </div>
+                    <div>
+                        <img src="download-10.png" alt="OOD Denoising sigma=1.0" class="display-img">
+                        <div class="img-caption"><strong>$\sigma = 1.0$:</strong> Ground Truth | Input | Model Prediction</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>Discussion & Generalization Analysis:</strong>
+            </p>
+            <ul>
+                <li><strong>In-Distribution Performance ($\sigma = 0.5$):</strong> The model achieves high reconstruction quality, cleanly recovering digit shapes and removing stroke background noise.</li>
+                <li><strong>Lower Noise Levels ($\sigma \le 0.4$):</strong> At $\sigma = 0.0, 0.2,$ and $0.4$, the model generalizes well and outputs clear digits, though it applies a mild smoothing effect even on completely clean inputs ($\sigma = 0.0$).</li>
+                <li><strong>Higher Out-of-Distribution Noise ($\sigma \ge 0.8$):</strong> As $\sigma$ increases significantly above $0.5$, performance degrades rapidly. At $\sigma = 0.8$ and $1.0$, extreme noise corruption breaks structural digit assumptions, causing the model to output blurry, hallucinated, or malformed stroke artifacts.</li>
+            </ul>
+        </div>
+        <!-- Section 1.2.3 -->
+        <div class="card">
+            <h2>1.2.3 Denoising Pure Noise</h2>
+            <p>
+                To explore whether a single-step denoiser can act as a generative model, I trained the UNet architecture directly on pure Gaussian noise inputs $z \sim \mathcal{N}(0, I)$ to map them to clean target MNIST digits $x_0$. 
+                The model was trained over 5 epochs using the same $L_2$ loss objective:
+            </p>
+
+            <div class="formula-card">
+                $$\mathcal{L} = \mathbb{E}_{x_0, z} \left[ \| f_\theta(z) - x_0 \|_2^2 \right]$$
+            </div>
+
+            <h3>Training Loss Curve</h3>
+            <div class="img-container">
+                <img src="download-13.png" alt="Pure Noise Denoising Loss Curve" class="display-img">
+                <div class="img-caption">Training loss curve for single-step pure noise denoising over 5 epochs.</div>
+            </div>
+
+            <h3>Test Set Denoising Visualizations (Pure Noise Inputs)</h3>
+            <p>I evaluated the trained pure noise denoiser after Epoch 1 and Epoch 5:</p>
+
+            <div class="img-container">
+                <div style="display: flex; flex-direction: column; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <img src="download-11.png" alt="Pure Noise Denoising Results Epoch 1" class="display-img">
+                        <div class="img-caption"><strong>Epoch 1 Test Results:</strong> Target Digits | Pure Noise Input | Model Output</div>
+                    </div>
+                    <div>
+                        <img src="download-12.png" alt="Pure Noise Denoising Results Epoch 5" class="display-img">
+                        <div class="img-caption"><strong>Epoch 5 Test Results:</strong> Target Digits | Pure Noise Input | Model Output</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>Observed Patterns & Mathematical Explanation:</strong>
+            </p>
+            <ul>
+                <li><strong>Observed Pattern:</strong> Regardless of the input noise vector $z$ or the target digit $x_0$, the model outputs an identical, blurry, composite digit artifact resembling a superimposition of an '8' or '0'.</li>
+                <li><strong>Relationship to Training Digits (Centroid Property):</strong> When optimizing an $L_2$ Mean Squared Error loss over pure unconditioned Gaussian noise $z$, the optimal prediction $\hat{x}$ that minimizes expected squared distance is the conditional expectation:
+                    $$\hat{x} = \mathbb{E}[x_0 \mid z] \approx \mathbb{E}[x_0]$$
+                    Because pure noise $z$ carries zero spatial or semantic signal regarding which specific digit class (0–9) was paired with it, the network learns to output the global pixel-wise mean (the "centroid") across the entire MNIST training set.
+                </li>
+                <li><strong>Conclusion:</strong> A single-step unconditioned network cannot map pure noise to diverse, sharp individual digits. This limitation motivates multi-step iterative flow models and conditioned sampling architectures.</li>
+            </ul>
+        </div>
 
     </main>
 
