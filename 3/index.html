@@ -309,6 +309,47 @@
 
             <p><strong>Discussion:</strong> Reusing the exact same noise tensor $\epsilon$ across all timesteps makes it clear how increasing $t$ preserves progressively more structure from the clean photograph. At $t = 0.25$, high-frequency visual information is dominated by noise variance, whereas by $t = 0.75$, the primary architectural features of the building become clearly visible.</p>
         </div>
+        <div class="card">
+            <h2>1.2 Classical Denoising</h2>
+            <p>
+                As a baseline without a learned flow model, we attempt classical denoising using Gaussian blur. 
+                Because the clean image contribution in $x_t$ is scaled by $t$, directly blurring $x_t$ would yield a dimmed result. 
+                Therefore, we first restore the image amplitude by dividing by $t$ before applying the Gaussian filter $G_\sigma$:
+            </p>
+
+            <div class="formula-card">
+                $$\hat{x}_{1,\text{blur}} = G_\sigma\left(\frac{x_t}{t}\right) = G_\sigma\left(x_1 + \frac{1 - t}{t}\epsilon\right)$$
+            </div>
+
+            <p>
+                Dividing by $t$ ensures the clean image component $x_1$ has unit weight, but it also scales up the noise variance by $\frac{1-t}{t}$. 
+                At low noise levels ($t = 0.75$), a light blur ($\sigma = 1.0$) suffices to remove residual noise while preserving sharp building details. 
+                At high noise levels ($t = 0.25$), a heavy blur ($\sigma = 4.0$) is required to suppress high noise variance, though it removes sharp high-frequency edges of the VLSB library in the process.
+            </p>
+
+            <div class="img-container">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0;">
+                    <div>
+                        <img src="blur_0.75.png" alt="Gaussian Blur t=0.25" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.25$</strong><br>Selected $\sigma = 4.0$ (Heaviest Blur)</div>
+                    </div>
+                    <div>
+                        <img src="blur_0.5.png" alt="Gaussian Blur t=0.50" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.50$</strong><br>Selected $\sigma = 2.0$ (Medium Blur)</div>
+                    </div>
+                    <div>
+                        <img src="blur_0.25.png" alt="Gaussian Blur t=0.75" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.75$</strong><br>Selected $\sigma = 1.0$ (Lightest Blur)</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>Discussion:</strong> Gaussian noise is zero-mean, so spatial averaging via convolution reduces noise variance across nearby pixels. 
+                However, because blurring operates indiscriminately on all high frequencies, it smooths out essential architectural contours alongside the noise. 
+                Classical linear filtering highlights the need for deep generative flow models that can denoise while hallucinating realistic high-frequency detail.
+            </p>
+        </div>
 
     </main>
 
