@@ -199,19 +199,19 @@
         <!-- Section 1 -->
         <div class="card">
             <h2>1. Visualizing Training and Sampling</h2>
-            <p>In flow matching, we utilize optimal-transport (OT) linear interpolation between standard Gaussian noise <code>x0 = ε ~ N(0, I)</code> and a clean image <code>x1</code> across timestep parameter <code>t ∈ [0, 1]</code>:</p>
+            <p>In flow matching, we utilize optimal-transport (OT) linear interpolation between standard Gaussian noise $x_0 = \epsilon \sim \mathcal{N}(0, I)$ and a clean image $x_1$ across timestep parameter $t \in [0, 1]$:</p>
             
             <div class="formula-box">
-                xt = (1 − t) * x0 + t * x1, &nbsp;&nbsp; t ∈ [0, 1]
+                $$x_t = (1 - t)x_0 + tx_1, \quad t \in [0, 1]$$
             </div>
 
-            <p>Here, <code>t = 0</code> represents pure noise, while <code>t = 1</code> corresponds to the clean target image. Smaller values of <code>t</code> indicate higher levels of noise.</p>
+            <p>Here, $t = 0$ represents pure noise, while $t = 1$ corresponds to the clean target image. Smaller values of $t$ indicate higher levels of noise.</p>
 
             <h3>1.1 Constructing Noisy Training Inputs</h3>
-            <p>To construct noisy inputs, we sample independent Gaussian noise <code>ε ~ N(0, I)</code> and interpolate it with a clean photograph center-cropped and resized to 512×512 with RGB values scaled to <code>[-1, 1]</code>. A single noise tensor is sampled once and reused across all timesteps <code>t ∈ {0.25, 0.50, 0.75}</code> to ensure direct comparability.</p>
+            <p>To construct noisy inputs, we sample independent Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and interpolate it with a clean photograph center-cropped and resized to $512 \times 512$ with RGB values scaled to $[-1, 1]$. A single noise tensor is sampled once and reused across all timesteps $t \in \{0.25, 0.50, 0.75\}$ to ensure direct comparability.</p>
 
             <div class="formula-box">
-                interpolate(image, noise, t) = (1 − t) * noise + t * image
+                $$x_t = (1 - t)\epsilon + tx_1, \quad \epsilon \sim \mathcal{N}(0, I)$$
             </div>
 
             <pre><code>def interpolate(image, noise, t):
@@ -219,7 +219,7 @@
 
             <img src="training_inputs.jpg" alt="Training Inputs: Original, t=0.25, t=0.5, t=0.75" class="display-img">
 
-            <p><strong>Discussion:</strong> As seen above, reusing the same sampled noise tensor highlights how increasing <code>t</code> preserves progressively more structural information from the original image. At <code>t = 0.25</code>, high-frequency details are heavily obscured by noise variance, whereas by <code>t = 0.75</code>, the primary architectural geometry of the building is clearly visible.</p>
+            <p><strong>Discussion:</strong> As seen above, reusing the same sampled noise tensor highlights how increasing $t$ preserves progressively more structural information from the original image. At $t = 0.25$, high-frequency details are heavily obscured by noise variance, whereas by $t = 0.75$, the primary architectural geometry of the building is clearly visible.</p>
         </div>
 
     </main>
