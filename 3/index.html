@@ -289,10 +289,11 @@
         <!-- Section 1 -->
         <div class="card">
             <h2>1. Visualizing Training and Sampling</h2>
-            <p>In flow matching, we use the optimal-transport (OT) formulation to linearly interpolate between standard Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and a clean image $x_1$ across timesteps $t \in [0, 1]$.</p>
+            <p>In flow matching, I linearly interpolate between standard Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and a clean image $x_1$ across timesteps $t \in [0, 1]$.</p>
+            <p> I took a natural photo of a building and created a series of noisy images by linearly interpolating between standard Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and the clean image \(x_1\) across timesteps $t \in [0, 1]$. The photograph was center-cropped, resized to $512 \times 512$, and its RGB values were scaled to $[-1, 1]$. At $t = 0$, the result is pure noise, while at $t = 1$, the original clean image is recovered. Each intermediate image is calculated as $(1 - t)\epsilon + tx_1$, using the same sampled noise image throughout the process. As $t$ decreases, the noise becomes more dominant, and the building becomes harder to recognize. Keeping the noise fixed makes it easier to compare the images because only the interpolation weights change.
 
             <h3>1.1 Constructing Noisy Training Inputs</h3>
-            <p>To construct noisy training inputs, we sample independent Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and interpolate it with a clean photograph center-cropped and resized to $512 \times 512$ with RGB values scaled to $[-1, 1]$. At $t = 0$ the output is pure noise, whereas at $t = 1$ we recover the clean image.</p>
+            <p>To construct noisy training inputs, I sample independent Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and interpolate it with a clean photograph center-cropped and resized to $512 \times 512$ with RGB values scaled to $[-1, 1]$. At $t = 0$ the output is pure noise, whereas at $t = 1$ I recover the clean image.</p>
 
             <div class="formula-card">
                 $$x_t = (1 - t)\epsilon + tx_1, \quad \epsilon \sim \mathcal{N}(0, I)$$
