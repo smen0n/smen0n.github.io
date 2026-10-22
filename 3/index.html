@@ -189,10 +189,40 @@
         <!-- Title Box -->
         <div class="title-box">
             <h1>Fun with Flow Models</h1>
-            <p class="subtitle">Part A: denoising, sampling and editing images with a pretrained flow model. Part B, flow matching from scratch, is <a href="#part-b">here</a>.</p>
-            <p class="author"><span>Henry Hong</span> &middot; Intro to Computer Vision & Computational Photography</p>
+            <p class="subtitle">Part A: denoising, sampling and editing images with a pretrained flow model. Part B: flow matching from scratch.</p>
+            <p class="author"><span>Sneha Menon</span> &middot; Intro to Computer Vision & Computational Photography</p>
         </div>
     </header>
+    <!-- Main Content -->
+    <main class="container">
+
+        <!-- Section 1 -->
+        <div class="card">
+            <h2>1. Visualizing Training and Sampling</h2>
+            <p>In flow matching, we utilize optimal-transport (OT) linear interpolation between standard Gaussian noise <code>x0 = ε ~ N(0, I)</code> and a clean image <code>x1</code> across timestep parameter <code>t ∈ [0, 1]</code>:</p>
+            
+            <div class="formula-box">
+                xt = (1 − t) * x0 + t * x1, &nbsp;&nbsp; t ∈ [0, 1]
+            </div>
+
+            <p>Here, <code>t = 0</code> represents pure noise, while <code>t = 1</code> corresponds to the clean target image. Smaller values of <code>t</code> indicate higher levels of noise.</p>
+
+            <h3>1.1 Constructing Noisy Training Inputs</h3>
+            <p>To construct noisy inputs, we sample independent Gaussian noise <code>ε ~ N(0, I)</code> and interpolate it with a clean photograph center-cropped and resized to 512×512 with RGB values scaled to <code>[-1, 1]</code>. A single noise tensor is sampled once and reused across all timesteps <code>t ∈ {0.25, 0.50, 0.75}</code> to ensure direct comparability.</p>
+
+            <div class="formula-box">
+                interpolate(image, noise, t) = (1 − t) * noise + t * image
+            </div>
+
+            <pre><code>def interpolate(image, noise, t):
+    return (1 - t) * noise + t * image</code></pre>
+
+            <img src="training_inputs.jpg" alt="Training Inputs: Original, t=0.25, t=0.5, t=0.75" class="display-img">
+
+            <p><strong>Discussion:</strong> As seen above, reusing the same sampled noise tensor highlights how increasing <code>t</code> preserves progressively more structural information from the original image. At <code>t = 0.25</code>, high-frequency details are heavily obscured by noise variance, whereas by <code>t = 0.75</code>, the primary architectural geometry of the building is clearly visible.</p>
+        </div>
+
+    </main>
 
 </body>
 </html>
