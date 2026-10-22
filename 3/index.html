@@ -388,6 +388,50 @@
                 However, when extrapolating across a large time step from $t = 0.25$, the single linear step results in slight over-smoothing along edge boundaries because actual learned flow trajectories are curved. Recomputing velocity at smaller intermediate timesteps will resolve this approximation error.
             </p>
         </div>
+        <!-- Section 1.4 -->
+        <div class="card">
+            <h2>1.4 Visualizing Velocity</h2>
+            <p>
+                In Section 1.3, I added $(1 - t)\hat{v}$ to the noisy image to estimate the clean image. Here, I visualize the exact updates added by the model and compare them against the ground-truth target updates.
+            </p>
+            <p>
+                Since I know the original clean image $x_1$ and the sampled noise $\epsilon$, the true target velocity is $v_{\text{gt}} = x_1 - \epsilon$. 
+                Multiplying by $(1 - t)$ yields the exact ground-truth update needed to recover $x_1$:
+            </p>
+
+            <div class="formula-card">
+                $$\Delta_{\text{pred}} = (1 - t)\hat{v}, \quad \Delta_{\text{gt}} = (1 - t)v_{\text{gt}} = x_1 - x_t$$
+            </div>
+
+            <p>
+                To quantify where the model's velocity prediction differs most from the target update, I compute a per-pixel Root Mean Square (RMS) error across the RGB channels:
+            </p>
+
+            <div class="formula-card">
+                $$E_t = \sqrt{\text{mean}_{\text{RGB}}\left[(\Delta_{\text{pred}} - \Delta_{\text{gt}})^2\right]}$$
+            </div>
+
+            <div class="img-container">
+                <div style="display: flex; flex-direction: column; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <img src="velocity_0.25.png" alt="Velocity Diagnostics at t=0.25" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.25$</strong> &middot; Noisy Image | Predicted $(1 - t)\hat{v}$ | Ground Truth $(1 - t)v_{\text{gt}}$ | Error (RGB RMS)</div>
+                    </div>
+                    <div>
+                        <img src="velocity_0.50.png" alt="Velocity Diagnostics at t=0.50" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.50$</strong> &middot; Noisy Image | Predicted $(1 - t)\hat{v}$ | Ground Truth $(1 - t)v_{\text{gt}}$ | Error (RGB RMS)</div>
+                    </div>
+                    <div>
+                        <img src="velocity_0.75.png" alt="Velocity Diagnostics at t=0.75" class="display-img">
+                        <div class="img-caption"><strong>$t = 0.75$</strong> &middot; Noisy Image | Predicted $(1 - t)\hat{v}$ | Ground Truth $(1 - t)v_{\text{gt}}$ | Error (RGB RMS)</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <strong>Discussion:</strong> Analyzing the error heatmaps reveals that prediction error is highest at $t = 0.25$ and consistently concentrated along sharp architectural boundaries, window frames, and high-frequency edges of the VLSB library. As $t$ increases to $0.75$, the magnitude of $(1 - t)$ shrinks, and the model's velocity estimate aligns much more closely with the ground-truth update, resulting in significantly lower RMS error across the whole image canvas.
+            </p>
+        </div>
 
     </main>
 
