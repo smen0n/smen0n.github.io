@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS180 Project 3: Fun with Flow Models</title>
+    
+    <!-- MathJax Configuration (Must be placed before script tag) -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <style>
         :root {
             --body-bg: #eef2f5;
@@ -13,6 +25,10 @@
             --card-border: #e2e8f0;
             --btn-border: #cbd5e1;
             --accent-green: #10b981;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
         body {
@@ -113,13 +129,86 @@
             color: var(--accent-green);
         }
 
-        .title-box a {
-            color: #38bdf8;
-            text-decoration: underline;
+        /* Content Container & Card Styles */
+        .container {
+            max-width: 900px;
+            margin: 40px auto 0 auto;
+            padding: 0 20px;
+            width: 100%;
         }
 
-        .title-box a:hover {
-            color: #7dd3fc;
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 30px;
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 16px 0;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--card-border);
+            padding-bottom: 8px;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            color: #334155;
+        }
+
+        .formula-card {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--accent-green);
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+            text-align: center;
+        }
+
+        pre {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 16px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            margin: 16px 0;
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #e2e8f0;
+            color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .img-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .display-img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            display: block;
+        }
+
+        .img-caption {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-top: 8px;
         }
 
         /* Animated Pulsing Constellation Effect */
@@ -193,33 +282,31 @@
             <p class="author"><span>Sneha Menon</span> &middot; Intro to Computer Vision & Computational Photography</p>
         </div>
     </header>
+
     <!-- Main Content -->
     <main class="container">
 
         <!-- Section 1 -->
         <div class="card">
             <h2>1. Visualizing Training and Sampling</h2>
-            <p>In flow matching, we utilize optimal-transport (OT) linear interpolation between standard Gaussian noise $x_0 = \epsilon \sim \mathcal{N}(0, I)$ and a clean image $x_1$ across timestep parameter $t \in [0, 1]$:</p>
-            
-            <div class="formula-box">
-                $$x_t = (1 - t)x_0 + tx_1, \quad t \in [0, 1]$$
-            </div>
-
-            <p>Here, $t = 0$ represents pure noise, while $t = 1$ corresponds to the clean target image. Smaller values of $t$ indicate higher levels of noise.</p>
+            <p>In flow matching, we use the optimal-transport (OT) formulation to linearly interpolate between standard Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and a clean image $x_1$ across timesteps $t \in [0, 1]$.</p>
 
             <h3>1.1 Constructing Noisy Training Inputs</h3>
-            <p>To construct noisy inputs, we sample independent Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and interpolate it with a clean photograph center-cropped and resized to $512 \times 512$ with RGB values scaled to $[-1, 1]$. A single noise tensor is sampled once and reused across all timesteps $t \in \{0.25, 0.50, 0.75\}$ to ensure direct comparability.</p>
+            <p>To construct noisy training inputs, we sample independent Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ and interpolate it with a clean photograph center-cropped and resized to $512 \times 512$ with RGB values scaled to $[-1, 1]$. At $t = 0$ the output is pure noise, whereas at $t = 1$ we recover the clean image.</p>
 
-            <div class="formula-box">
+            <div class="formula-card">
                 $$x_t = (1 - t)\epsilon + tx_1, \quad \epsilon \sim \mathcal{N}(0, I)$$
             </div>
 
             <pre><code>def interpolate(image, noise, t):
     return (1 - t) * noise + t * image</code></pre>
 
-            <img src="training_inputs.jpg" alt="Training Inputs: Original, t=0.25, t=0.5, t=0.75" class="display-img">
+            <div class="img-container">
+                <img src="training_inputs.jpg" alt="Training Inputs: Original, t=0.25, t=0.5, t=0.75" class="display-img">
+                <div class="img-caption">Training Inputs: Original image and interpolated noisy versions at $t = 0.25, 0.50, 0.75$ using the same sampled noise tensor $\epsilon$.</div>
+            </div>
 
-            <p><strong>Discussion:</strong> As seen above, reusing the same sampled noise tensor highlights how increasing $t$ preserves progressively more structural information from the original image. At $t = 0.25$, high-frequency details are heavily obscured by noise variance, whereas by $t = 0.75$, the primary architectural geometry of the building is clearly visible.</p>
+            <p><strong>Discussion:</strong> Reusing the exact same noise tensor $\epsilon$ across all timesteps makes it clear how increasing $t$ preserves progressively more structure from the clean photograph. At $t = 0.25$, high-frequency visual information is dominated by noise variance, whereas by $t = 0.75$, the primary architectural features of the building become clearly visible.</p>
         </div>
 
     </main>
