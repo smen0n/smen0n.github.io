@@ -646,6 +646,58 @@ def euler_sample(x_start, t_start, step_size, velocity):
                 By $t_{\text{start}} \ge 0.25$, the flat, multi-colored cartoon drawing is fully preserved.
             </p>
         </div>
+        <!-- Section 3.2 -->
+        <div class="card">
+            <h2>3.2 Text-Guided Image Editing</h2>
+            <p>
+                In Section 3.1, I projected noisy images back onto the natural image manifold using the generic prompt <em>"a high quality photo"</em>. 
+                Here, I extend this pipeline to perform targeted text-guided image editing. By replacing the generic prompt embedding $c$ with a specific text prompt describing a desired transformation, the flow model is guided to hallucinate new visual content aligned with the prompt while maintaining structural fidelity to the original input.
+            </p>
+            <p>
+                I evaluated the exact same seven starting timesteps $t_{\text{start}} \in \{0.02, 0.04, 0.06, 0.10, 0.14, 0.25, 0.50\}$ using Classifier-Free Guidance ($w = 7.0$, step size $h = 0.02$) across my three test images.
+            </p>
+
+            <h3>1. Campanile Edit: Stone Waterfall</h3>
+            <p><strong>Prompt:</strong> <em>"a photograph of a stone waterfall flowing down a cliff"</em></p>
+            <div class="img-container">
+                <img src="text_edit_campanile.png" alt="Text-guided edit of Campanile into a stone waterfall" class="display-img">
+                <div class="img-caption">Text-guided edits of the Berkeley Campanile using prompt: <em>"a photograph of a stone waterfall flowing down a cliff"</em>.</div>
+            </div>
+            <p>
+                <strong>Observations (Campanile Waterfall):</strong> 
+                At low starting times ($t_{\text{start}} = 0.02$ to $0.06$), the prompt dominates completely, generating natural rock cliffs and cascading water. 
+                At intermediate times ($t_{\text{start}} = 0.10$ and $0.14$), a strong hybrid effect emerges: the tall, vertical geometry of the Campanile is preserved, but its stone surface transforms into cascading water flowing down vertical rock formations. 
+                By $t_{\text{start}} \ge 0.25$, the original architectural tower features overcome the prompt guidance.
+            </p>
+
+            <h3>2. Custom Image 1 (VLSB Library) Edit: Grand Piano Keys</h3>
+            <p><strong>Prompt:</strong> <em>"a detailed, close-up photograph of grand piano keys"</em></p>
+            <div class="img-container">
+                <img src="text_edit_my_image_1.pg" alt="Text-guided edit of VLSB Library into grand piano keys" class="display-img">
+                <div class="img-caption">Text-guided edits of the VLSB Berkeley Library using prompt: <em>"a detailed, close-up photograph of grand piano keys"</em>.</div>
+            </div>
+            <p>
+                <strong>Observations (VLSB Library Piano Keys):</strong> 
+                The repeating vertical columns and dark window panes of the VLSB library map naturally onto the alternating black and white pattern of piano keys. 
+                At $t_{\text{start}} = 0.02$ to $0.06$, the model generates realistic piano keyboards in close-up perspective. 
+                At $t_{\text{start}} = 0.10$ and $0.14$, the vertical library columns are reinterpreted directly as ivory keys and black sharps. 
+                At $t_{\text{start}} \ge 0.25$, the structural constraints of the building prevail over the piano prompt.
+            </p>
+
+            <h3>3. Custom Image 2 (Pumpkin) Edit: Fiery Orange Sun in Space</h3>
+            <p><strong>Prompt:</strong> <em>"a photograph of a fiery, orange sun in space"</em></p>
+            <div class="img-container">
+                <img src="text_edit_my_image_2.png" alt="Text-guided edit of Pumpkin into a fiery sun in space" class="display-img">
+                <div class="img-caption">Text-guided edits of the Jack-o'-lantern pumpkin using prompt: <em>"a photograph of a fiery, orange sun in space"</em>.</div>
+            </div>
+            <p>
+                <strong>Observations (Pumpkin Fiery Sun):</strong> 
+                The round orange shape and internal glow of the Jack-o'-lantern serve as an ideal structural anchor for a celestial body. 
+                At low timesteps ($t_{\text{start}} = 0.02$ to $0.06$), the model produces a blazing solar orb surrounded by cosmic dark space. 
+                At $t_{\text{start}} = 0.10$ and $0.14$, the pumpkin retains its circular silhouette and warm color palette, but its surface glows with turbulent solar flares instead of carved facial features. 
+                By $t_{\text{start}} \ge 0.25$, the jack-o'-lantern's carved eyes, mouth, and indoor background reappear.
+            </p>
+        </div>
 
     </main>
 
