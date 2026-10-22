@@ -1062,6 +1062,59 @@ up1 = c2 * up1 + t2</code></pre>
         </div>
 
     </main>
+    <!-- Section 2.6 -->
+        <div class="card">
+            <h2>2.6 Sampling from the Class-Conditioned UNet & Learning Rate Analysis</h2>
+            <p>
+                Using the trained class-conditioned UNet, I generated structured digit samples using Classifier-Free Guidance (CFG scale $w = 5.0$) integrated over 50 Euler steps ($t \in [0, 1]$). 
+                At each integration step, I evaluated two velocity predictions: a class-conditioned velocity $v_c = v_\theta(x_t, t, c)$ and an unconditional velocity $v_u = v_\theta(x_t, t, \mathbf{0})$, combining them via:
+            </p>
+
+            <div class="formula-card">
+                $$v_{\text{cfg}} = v_u + w(v_c - v_u)$$
+            </div>
+
+            <p>
+                I sampled 4 instances for each digit class ($0$ through $9$) across Epochs 1, 5, and 10 to evaluate convergence quality.
+            </p>
+
+            <h3>Class-Conditioned Generation Visualizations ($w = 5.0$)</h3>
+            <div class="img-container">
+                <div style="display: flex; flex-direction: column; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <img src="download-19.png" alt="Class-Conditioned Sampling Epoch 1" class="display-img">
+                        <div class="img-caption"><strong>Epoch 1 Samples:</strong> Class-conditioned digits (4 per class, 0–9) showing early structural formation.</div>
+                    </div>
+                    <div>
+                        <img src="download-20.png" alt="Class-Conditioned Sampling Epoch 5" class="display-img">
+                        <div class="img-caption"><strong>Epoch 5 Samples:</strong> Highly recognizable digit classes with clean stroke lines.</div>
+                    </div>
+                    <div>
+                        <img src="download-21.png" alt="Class-Conditioned Sampling Epoch 10" class="display-img">
+                        <div class="img-caption"><strong>Epoch 10 Samples:</strong> Sharp, pristine digit generation across all ten class rows.</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Eliminating the Learning Rate Scheduler</h3>
+            <p>
+                To simplify the training pipeline and eliminate the exponential learning rate decay scheduler ($\text{initial lr} = 10^{-2}, \gamma = 0.794$), I evaluated a constant learning rate setup.
+            </p>
+
+            <div class="img-container">
+                <img src="download-18.png" alt="Loss comparison between Exponential LR Decay and Constant LR" class="display-img">
+                <div class="img-caption">Class-Conditioned UNet Loss Comparison: Exponential LR Decay vs. Constant Learning Rate ($\text{lr} = 10^{-3}$).</div>
+            </div>
+
+            <p>
+                <strong>Compensation Strategy & Analysis:</strong>
+            </p>
+            <ul>
+                <li><strong>What I Did to Compensate:</strong> Instead of starting at a high initial learning rate ($\text{lr} = 10^{-2}$) and relying on exponential decay to prevent late-stage divergence, I set a fixed, moderate constant learning rate of $\text{lr} = 10^{-3}$ with Adam.</li>
+                <li><strong>Performance Impact:</strong> As shown in the loss comparison curve, the constant learning rate model bypasses the large initial loss spike seen in the decayed schedule ($\approx 3.5 \rightarrow 0.4$), immediately starting at a much lower loss ($\approx 1.2$) and converging smoothly to the same final MSE loss value ($\approx 0.08$).</li>
+                <li><strong>Conclusion:</strong> Removing the learning rate scheduler simplifies the training pipeline without sacrificing generation quality or convergence speed, achieving identical final sample fidelity across all ten digit classes.</li>
+            </ul>
+        </div>
 
 </body>
 </html>
