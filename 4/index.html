@@ -43,7 +43,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,
 .formula-card { background:#f8fafc; border-left:4px solid var(--accent-green); padding:16px 20px; margin:20px 0;
   border-radius:0 10px 10px 0; text-align:center; overflow-x:auto; }
 pre { background:#1e293b; color:#f8fafc; padding:16px; border-radius:10px; overflow-x:auto;
-  font-family:'Courier New',Courier,monospace; font-size:.85rem; margin:16px 0; }
+  font-family:'Courier New',Courier,monospace; font-size:.8rem; margin:16px 0; }
 code { font-family:'Courier New',Courier,monospace; background:#e2e8f0; color:#0f172a; padding:2px 6px; border-radius:4px; font-size:.9em; }
 pre code { background:none; color:inherit; padding:0; }
 
@@ -162,27 +162,49 @@ th { background:#f1f5f9; }
 
   <h3>System of equations and recovered homography</h3>
   <p>The system for the first campus pair (<code>campus_1</code> &rarr; <code>campus_2</code>, 10 points, so $A$ is $20 \times 8$), printed by <code>print_system</code>:</p>
-  <!-- PASTE the printed A, b and H from your terminal below -->
 <pre><code># A (20 x 8), columns a b c d e f g h
-[ ...paste printed A here... ]
+[    455.344    675.474      1.         0.         0.         0.      -16182.458   -24005.645]
+[      0.         0.         0.       455.344    675.474      1.     -323983.28   -480608.542]
+[    458.266    435.864      1.         0.         0.         0.      -15393.579   -14641.056]
+[      0.         0.         0.       458.266    435.864      1.     -201527.04   -191675.28 ]
+[    610.214    434.89       1.         0.         0.         0.     -124511.451   -88737.248]
+[      0.         0.         0.       610.214    434.89       1.     -277263.144  -197600.849]
+[    609.24     472.877      1.         0.         0.         0.     -124312.706   -96488.326]
+[      0.         0.         0.       609.24     472.877      1.     -301150.625  -233745.371]
+[    606.318    673.526      1.         0.         0.         0.     -126669.317  -140710.072]
+[      0.         0.         0.       606.318    673.526      1.     -423725.855  -470694.064]
+[    773.851    473.851      1.         0.         0.         0.     -278500.809  -170533.926]
+[      0.         0.         0.       773.851    473.851      1.     -390055.902  -238842.266]
+[    775.799    437.812      1.         0.         0.         0.     -282224.485  -159269.638]
+[      0.         0.         0.       775.799    437.812      1.     -366101.422  -206604.473]
+[    770.929    670.604      1.         0.         0.         0.     -279701.897  -243302.932]
+[      0.         0.         0.       770.929    670.604      1.     -526749.462  -458200.998]
+[    886.838    768.006      1.         0.         0.         0.     -401224.938  -347463.094]
+[      0.         0.         0.       886.838    768.006      1.     -679369.478  -588337.858]
+[    793.331    720.279      1.         0.         0.         0.     -300193.423  -272550.851]
+[      0.         0.         0.       793.331    720.279      1.     -580692.658  -527221.004]
 
 # b (20)
-[ ...paste printed b here... ]</code></pre>
-  <p>Recovered homography $H$ (image 1 &rarr; image 2):</p>
+[ 35.539 711.513  33.591 439.76  204.045 454.37  204.045 494.305 208.916 698.851
+ 359.89  504.045 363.786 471.903 362.812 683.266 452.422 766.058 378.396 731.968]</code></pre>
+  <p>Recovered homography $H$ (campus image 1 &rarr; image 2, entries rounded to 3 decimals):</p>
   <div class="formula-card">
-    $$H = \begin{bmatrix} h_{11} & h_{12} & h_{13} \\ h_{21} & h_{22} & h_{23} \\ h_{31} & h_{32} & 1 \end{bmatrix}$$
-    <!-- replace entries with your printed numbers -->
+    $$H = \begin{bmatrix} 1.954 & 0.052 & -869.508 \\ 0.631 & 1.768 & -392.327 \\ 0.001 & 0.000 & 1 \end{bmatrix}$$
   </div>
 
   <h3>Reprojection error</h3>
   <p>As a check, I apply $H$ to the clicked points in image 1 and measure the pixel distance to their clicked matches in image 2 (images are at most 1200 px on the long side).</p>
   <table>
     <tr><th>Pair</th><th>Points</th><th>Mean error (px)</th><th>Worst (px)</th></tr>
-    <tr><td>campus 1 &rarr; 2</td><td>10</td><td>XX</td><td>XX</td></tr>
-    <tr><td>campus 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
-    <tr><td>street 1 &rarr; 2</td><td>10</td><td>XX</td><td>XX</td></tr>
-    <tr><td>street 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
+    <tr><td>campus 1 &rarr; 2</td><td>10</td><td>1.86</td><td>4.19</td></tr>
+    <tr><td>campus 2 &rarr; 3</td><td>10</td><td>1.66</td><td>3.39</td></tr>
+    <tr><td>street 1 &rarr; 2</td><td>10</td><td>4.08</td><td>7.72</td></tr>
+    <tr><td>street 2 &rarr; 3</td><td>10</td><td>1.07</td><td>1.68</td></tr>
   </table>
+  <p>
+    Most pairs are under 2 px on average. The street 1 &rarr; 2 pair has the largest error (4.08 px mean, 7.72 px worst), which I attribute to click imprecision and to
+    small parallax from handheld rotation. This is still small enough that the blended mosaic hides it.
+  </p>
 </div>
 
 <!-- A.3 -->
@@ -218,6 +240,12 @@ th { background:#f1f5f9; }
     <img class="display-img" src="results/streetSign_rectification.png" alt="Street sign rectification">
     <div class="img-caption">Input with clicked corners | nearest neighbor | bilinear</div>
   </div>
+
+  <p>Recovered homographies for the two rectifications (image &rarr; rectified rectangle):</p>
+  <div class="formula-card">
+    $$H_{\text{facade}} = \begin{bmatrix} 8.599 & 0.547 & -3031.6 \\ 3.511 & 4.712 & -2521.9 \\ 0.0065 & 0.0013 & 1 \end{bmatrix}, \quad
+    H_{\text{sign}} = \begin{bmatrix} 4.541 & 0.141 & -1603.1 \\ 0.843 & 3.527 & -1429.4 \\ 0.00086 & 0.00003 & 1 \end{bmatrix}$$
+  </div>
   <p><strong>Observations:</strong> [Describe: do the edges of the object come out straight and parallel? What about things off the plane, like the wall around the shutter or the pole?]</p>
 
   <h3>Nearest neighbor vs. bilinear</h3>
@@ -228,13 +256,13 @@ th { background:#f1f5f9; }
     <div><img class="display-img" src="results/streetSign_bilinear.png" alt="sign bilinear"><div class="img-caption">Street sign: bilinear</div></div>
   </div>
   <table>
-    <tr><th>Image</th><th>Nearest neighbor</th><th>Bilinear</th></tr>
-    <tr><td>Facade</td><td>XX ms</td><td>XX ms</td></tr>
-    <tr><td>Street sign</td><td>XX ms</td><td>XX ms</td></tr>
+    <tr><th>Image</th><th>Nearest neighbor</th><th>Bilinear</th><th>Ratio</th></tr>
+    <tr><td>Facade</td><td>20.6 ms</td><td>51.9 ms</td><td>2.5&times;</td></tr>
+    <tr><td>Street sign</td><td>23.1 ms</td><td>62.8 ms</td><td>2.7&times;</td></tr>
   </table>
   <p>
     <strong>Quality vs. speed:</strong> Nearest neighbor does one lookup per output pixel, so it is the faster of the two, but it turns edges and text into jagged stair-steps. Bilinear does four lookups plus the weights
-    for every pixel, so it takes roughly [X]&times; as long, but it produces smooth edges and is only slightly softer. The difference is small in absolute time, so I used bilinear for all the mosaics, where jagged edges would
+    for every pixel, so it takes roughly 2.5&ndash;2.7&times; as long, but it produces smooth edges and is only slightly softer. The difference is only tens of milliseconds, so I used bilinear for all the mosaics, where jagged edges would
     show up in every overlap.
   </p>
 </div>
