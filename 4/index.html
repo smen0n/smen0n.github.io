@@ -93,7 +93,7 @@ th { background:#f1f5f9; }
 <div class="card">
   <h2>A.1 Shooting the Pictures</h2>
   <p>
-    I shot three sets of overlapping photos, standing in one spot and rotating the camera between shots so the center of projection stayed (roughly) fixed.
+    I shot two sets of overlapping photos, standing in one spot and rotating the camera between shots so the center of projection stayed (roughly) fixed.
     Under a pure rotation, the images are related by a homography. I kept adjacent photos at roughly 40&ndash;70% overlap and kept the near foreground
     out of the overlap where possible, since close objects shift (parallax) and no single homography can align them.
   </p>
@@ -109,12 +109,6 @@ th { background:#f1f5f9; }
     <img class="display-img" src="data/street_1.jpg" alt="street 1">
     <img class="display-img" src="data/street_2.jpg" alt="street 2">
     <img class="display-img" src="data/street_3.jpg" alt="street 3">
-  </div>
-  <h3>Gateway</h3>
-  <div class="grid3">
-    <img class="display-img" src="data/gateway_1.jpg" alt="gateway 1">
-    <img class="display-img" src="data/gateway_2.jpg" alt="gateway 2">
-    <img class="display-img" src="data/gateway_3.jpg" alt="gateway 3">
   </div>
   <p>For rectification I used two photos of known rectangular objects taken from an angle: a window shutter on a facade and a street sign.</p>
   <div class="grid2">
@@ -164,8 +158,6 @@ th { background:#f1f5f9; }
     <div><img class="display-img" src="results/campus_corr_1_2.png" alt="campus correspondences 2-3"><div class="img-caption">Campus: image 2 &harr; 3</div></div>
     <div><img class="display-img" src="results/street_corr_0_1.png" alt="street correspondences 1-2"><div class="img-caption">Street: image 1 &harr; 2</div></div>
     <div><img class="display-img" src="results/street_corr_1_2.png" alt="street correspondences 2-3"><div class="img-caption">Street: image 2 &harr; 3</div></div>
-    <div><img class="display-img" src="results/gateway_corr_0_1.png" alt="gateway correspondences 1-2"><div class="img-caption">Gateway: image 1 &harr; 2</div></div>
-    <div><img class="display-img" src="results/gateway_corr_1_2.png" alt="gateway correspondences 2-3"><div class="img-caption">Gateway: image 2 &harr; 3</div></div>
   </div>
 
   <h3>System of equations and recovered homography</h3>
@@ -190,8 +182,6 @@ th { background:#f1f5f9; }
     <tr><td>campus 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
     <tr><td>street 1 &rarr; 2</td><td>10</td><td>XX</td><td>XX</td></tr>
     <tr><td>street 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
-    <tr><td>gateway 1 &rarr; 2</td><td>10</td><td>XX</td><td>XX</td></tr>
-    <tr><td>gateway 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
   </table>
 </div>
 
@@ -254,7 +244,7 @@ th { background:#f1f5f9; }
   <h2>A.4 Blending Images into a Mosaic</h2>
   <p>My procedure for each mosaic of three photos:</p>
   <ol>
-    <li>Compute homographies between adjacent images, then compose them (e.g. image 1 &rarr; image 3 is $H_{23}^{-1}\ldots$ chained appropriately) so every image maps into the <strong>middle image's frame</strong>, which stays unwarped.</li>
+    <li>Compute a homography between each adjacent pair of images. The <strong>middle image is the reference and stays unwarped</strong>: the left image is warped into its frame with $H_{12}$, and the right image with $H_{23}^{-1}$.</li>
     <li>Send every image's four corners through its homography and take the union bounding box, which gives one shared canvas size.</li>
     <li>Inverse-warp each image (bilinear) onto its own canvas of that size, along with a weight map equal to the distance to the nearest image edge (normalized to 1 at the center, like <code>bwdist</code>), warped as an extra channel.</li>
     <li>Blend. I compared three methods: <strong>overwrite</strong> (hard seams), <strong>feathering</strong> (weighted average, $\sum w_i I_i / \sum w_i$), and <strong>two-band blending</strong>.</li>
@@ -302,21 +292,6 @@ th { background:#f1f5f9; }
   </div>
   <div class="img-container">
     <img class="display-img" src="results/street_blend_comparison.png" alt="Street blend comparison">
-    <div class="img-caption">Overwrite | feathering | two-band</div>
-  </div>
-
-  <h3>Mosaic 3: Gateway</h3>
-  <div class="grid3">
-    <img class="display-img" src="data/gateway_1.jpg" alt="gateway 1">
-    <img class="display-img" src="data/gateway_2.jpg" alt="gateway 2">
-    <img class="display-img" src="data/gateway_3.jpg" alt="gateway 3">
-  </div>
-  <div class="img-container">
-    <img class="display-img" src="results/gateway_two_band.png" alt="Gateway mosaic">
-    <div class="img-caption">Gateway mosaic (two-band blending)</div>
-  </div>
-  <div class="img-container">
-    <img class="display-img" src="results/gateway_blend_comparison.png" alt="Gateway blend comparison">
     <div class="img-caption">Overwrite | feathering | two-band</div>
   </div>
 
