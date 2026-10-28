@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS180 Project 4A: Image Warping and Mosaicing</title>
+
+<script>
+window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+:root {
+  --body-bg:#eef2f5; --text-main:#1e293b; --text-muted:#64748b;
+  --card-bg:#ffffff; --card-border:#e2e8f0; --accent-green:#10b981;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--body-bg); color:var(--text-main); margin:0; padding:0 0 80px 0; line-height:1.6; }
+
+.hero-section { position:relative; height:380px; background:linear-gradient(180deg,#334155 0%,#1e293b 100%);
+  overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.mountain-svg { position:absolute; bottom:0; left:0; width:100%; height:100%; pointer-events:none; }
+.top-nav { position:absolute; top:20px; left:24px; z-index:10; }
+.back-btn { background:rgba(255,255,255,.1); color:#fff; padding:8px 18px; border-radius:8px; text-decoration:none;
+  font-size:.9rem; font-weight:500; border:1px solid rgba(255,255,255,.4); backdrop-filter:blur(8px); transition:all .2s ease; }
+.back-btn:hover { background:rgba(255,255,255,.25); border-color:#fff; }
+.title-box { position:relative; z-index:5; background:rgba(30,41,59,.65); backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 10px 30px rgba(0,0,0,.25),0 0 30px rgba(16,185,129,.15); border-radius:20px;
+  padding:40px 60px; text-align:center; max-width:680px; margin:0 20px; }
+.title-box h1 { color:#fff; font-size:2.2rem; font-weight:700; margin:0 0 10px; letter-spacing:-.5px; }
+.title-box .subtitle { color:#cbd5e1; font-size:1.05rem; margin:0 0 16px; }
+.title-box .author { color:#94a3b8; font-size:.95rem; margin:0; font-weight:500; }
+.title-box .author span { color:var(--accent-green); }
+
+.container { max-width:900px; margin:40px auto 0; padding:0 20px; width:100%; }
+.card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:16px; padding:32px;
+  box-shadow:0 4px 12px rgba(0,0,0,.03); margin-bottom:30px; }
+.card h2 { font-size:1.5rem; font-weight:700; margin:0 0 16px; border-bottom:2px solid var(--card-border); padding-bottom:8px; }
+.card h3 { font-size:1.2rem; font-weight:600; margin:24px 0 12px; color:#334155; }
+.formula-card { background:#f8fafc; border-left:4px solid var(--accent-green); padding:16px 20px; margin:20px 0;
+  border-radius:0 10px 10px 0; text-align:center; overflow-x:auto; }
+pre { background:#1e293b; color:#f8fafc; padding:16px; border-radius:10px; overflow-x:auto;
+  font-family:'Courier New',Courier,monospace; font-size:.85rem; margin:16px 0; }
+code { font-family:'Courier New',Courier,monospace; background:#e2e8f0; color:#0f172a; padding:2px 6px; border-radius:4px; font-size:.9em; }
+pre code { background:none; color:inherit; padding:0; }
+
+.img-container { margin:20px 0; text-align:center; }
+.display-img { width:100%; height:auto; border-radius:10px; border:1px solid var(--card-border); display:block; }
+.img-caption { font-size:.88rem; color:var(--text-muted); margin-top:8px; }
+.grid2 { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin:20px 0; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:20px 0; }
+@media (max-width:640px){ .grid2,.grid3{ grid-template-columns:1fr; } .title-box{padding:28px 24px;} }
+
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:.95rem; }
+th, td { border:1px solid var(--card-border); padding:8px 12px; text-align:center; }
+th { background:#f1f5f9; }
+
+@keyframes nodePulse { 0%,100%{opacity:.3;transform:scale(1);} 50%{opacity:.9;transform:scale(1.3);} }
+.pulse-node { animation:nodePulse 3s infinite ease-in-out; transform-origin:center; }
+</style>
+</head>
+<body>
+
+<header class="hero-section">
+  <div class="top-nav"><a href="../index.html" class="back-btn">&larr; Back to Portfolio</a></div>
+  <svg class="mountain-svg" viewBox="0 0 1440 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="mtnBack" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#334155"/></linearGradient>
+      <linearGradient id="mtnMid" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#64748b"/><stop offset="100%" stop-color="#475569"/></linearGradient>
+      <linearGradient id="mtnFront" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#64748b"/></linearGradient>
+    </defs>
+    <path d="M0 400 L0 180 L250 80 L500 220 L750 120 L1100 260 L1440 140 L1440 400 Z" fill="url(#mtnBack)"/>
+    <path d="M0 400 L0 230 L320 120 L620 280 L920 160 L1250 300 L1440 210 L1440 400 Z" fill="url(#mtnMid)" opacity=".8"/>
+    <path d="M0 400 L0 290 L220 190 L520 340 L820 200 L1180 370 L1440 260 L1440 400 Z" fill="url(#mtnFront)"/>
+    <path d="M220 190 L520 120 L820 200 M520 120 L680 90 M820 200 L950 140" stroke="#10b981" stroke-width="1.5" opacity=".5" fill="none"/>
+    <circle class="pulse-node" cx="520" cy="120" r="4" fill="#10b981"/>
+    <circle class="pulse-node" cx="680" cy="90" r="3" fill="#34d399"/>
+    <circle class="pulse-node" cx="820" cy="200" r="4.5" fill="#10b981"/>
+  </svg>
+  <div class="title-box">
+    <h1>Image Warping and Mosaicing</h1>
+    <p class="subtitle">Part A: recovering homographies, inverse warping, rectification, and blended photo mosaics.</p>
+    <p class="author"><span>Sneha Menon</span> &middot; Intro to Computer Vision & Computational Photography</p>
+  </div>
+</header>
+
+<main class="container">
+
+<!-- A.1 -->
+<div class="card">
+  <h2>A.1 Shooting the Pictures</h2>
+  <p>
+    I shot three sets of overlapping photos, standing in one spot and rotating the camera between shots so the center of projection stayed (roughly) fixed.
+    Under a pure rotation, the images are related by a homography. I kept adjacent photos at roughly 40&ndash;70% overlap and kept the near foreground
+    out of the overlap where possible, since close objects shift (parallax) and no single homography can align them.
+  </p>
+
+  <h3>Campus interior</h3>
+  <div class="grid3">
+    <img class="display-img" src="data/campus_1.jpg" alt="campus 1">
+    <img class="display-img" src="data/campus_2.jpg" alt="campus 2">
+    <img class="display-img" src="data/campus_3.jpg" alt="campus 3">
+  </div>
+  <h3>Street</h3>
+  <div class="grid3">
+    <img class="display-img" src="data/street_1.jpg" alt="street 1">
+    <img class="display-img" src="data/street_2.jpg" alt="street 2">
+    <img class="display-img" src="data/street_3.jpg" alt="street 3">
+  </div>
+  <h3>Gateway</h3>
+  <div class="grid3">
+    <img class="display-img" src="data/gateway_1.jpg" alt="gateway 1">
+    <img class="display-img" src="data/gateway_2.jpg" alt="gateway 2">
+    <img class="display-img" src="data/gateway_3.jpg" alt="gateway 3">
+  </div>
+  <p>For rectification I used two photos of known rectangular objects taken from an angle: a window shutter on a facade and a street sign.</p>
+  <div class="grid2">
+    <img class="display-img" src="data/facade.jpg" alt="facade">
+    <img class="display-img" src="data/streetSign.jpg" alt="street sign">
+  </div>
+</div>
+
+<!-- A.2 -->
+<div class="card">
+  <h2>A.2 Recovering Homographies</h2>
+  <p>
+    A homography $H$ maps a point $(x, y)$ in image 1 to $(x', y')$ in image 2. In homogeneous coordinates, $[x', y', 1]^T \sim H\,[x, y, 1]^T$, and since
+    scale does not matter I fix the bottom-right entry to $1$, leaving $8$ unknowns $(a, b, c, d, e, f, g, h)$:
+  </p>
+  <div class="formula-card">
+    $$x' = \frac{ax + by + c}{gx + hy + 1}, \qquad y' = \frac{dx + ey + f}{gx + hy + 1}$$
+  </div>
+  <p>Multiplying out the denominator makes both equations linear in the unknowns, so every correspondence contributes two rows of $A\mathbf{h} = \mathbf{b}$:</p>
+  <div class="formula-card">
+    $$\begin{bmatrix} x & y & 1 & 0 & 0 & 0 & -x x' & -y x' \\ 0 & 0 & 0 & x & y & 1 & -x y' & -y y' \end{bmatrix}
+    \begin{bmatrix} a \\ b \\ c \\ d \\ e \\ f \\ g \\ h \end{bmatrix} =
+    \begin{bmatrix} x' \\ y' \end{bmatrix}$$
+  </div>
+  <p>
+    Four points give exactly 8 equations, which fits any click error perfectly and makes $H$ unstable. I used <strong>10 correspondences</strong> per image pair
+    (20 equations) and solved the overdetermined system with least squares (<code>np.linalg.lstsq</code>). I also normalize the points (zero mean, mean distance
+    $\sqrt{2}$) before solving and undo the normalization afterward, which improves numerical conditioning without changing the solution.
+  </p>
+
+  <pre><code>def computeH(im1_pts, im2_pts, normalize=True):
+    p1n, T1 = _normalize_pts(im1_pts)
+    p2n, T2 = _normalize_pts(im2_pts)
+    A, b = build_system(p1n, p2n)               # two rows per correspondence
+    h = np.linalg.lstsq(A, b, rcond=None)[0]    # least squares
+    Hn = np.append(h, 1.0).reshape(3, 3)
+    H = np.linalg.inv(T2) @ Hn @ T1             # undo normalization
+    return H / H[2, 2]</code></pre>
+
+  <h3>Correspondences</h3>
+  <p>
+    I clicked corresponding points with a small matplotlib tool. I chose sharp, easy-to-match features (door frames, signs, building and window corners)
+    spread across the whole overlap, avoiding sky, people, and the nearby couches that move under parallax.
+  </p>
+  <div class="grid2">
+    <div><img class="display-img" src="results/campus_corr_0_1.png" alt="campus correspondences 1-2"><div class="img-caption">Campus: image 1 &harr; 2</div></div>
+    <div><img class="display-img" src="results/campus_corr_1_2.png" alt="campus correspondences 2-3"><div class="img-caption">Campus: image 2 &harr; 3</div></div>
+    <div><img class="display-img" src="results/street_corr_0_1.png" alt="street correspondences 1-2"><div class="img-caption">Street: image 1 &harr; 2</div></div>
+    <div><img class="display-img" src="results/street_corr_1_2.png" alt="street correspondences 2-3"><div class="img-caption">Street: image 2 &harr; 3</div></div>
+    <div><img class="display-img" src="results/gateway_corr_0_1.png" alt="gateway correspondences 1-2"><div class="img-caption">Gateway: image 1 &harr; 2</div></div>
+    <div><img class="display-img" src="results/gateway_corr_1_2.png" alt="gateway correspondences 2-3"><div class="img-caption">Gateway: image 2 &harr; 3</div></div>
+  </div>
+
+  <h3>System of equations and recovered homography</h3>
+  <p>The system for the first campus pair (<code>campus_1</code> &rarr; <code>campus_2</code>, 10 points, so $A$ is $20 \times 8$), printed by <code>print_system</code>:</p>
+  <!-- PASTE the printed A, b and H from your terminal below -->
+<pre><code># A (20 x 8), columns a b c d e f g h
+[ ...paste printed A here... ]
+
+# b (20)
+[ ...paste printed b here... ]</code></pre>
+  <p>Recovered homography $H$ (image 1 &rarr; image 2):</p>
+  <div class="formula-card">
+    $$H = \begin{bmatrix} h_{11} & h_{12} & h_{13} \\ h_{21} & h_{22} & h_{23} \\ h_{31} & h_{32} & 1 \end{bmatrix}$$
+    <!-- replace entries with your printed numbers -->
+  </div>
+
+  <h3>Reprojection error</h3>
+  <p>As a check, I apply $H$ to the clicked points in image 1 and measure the pixel distance to their clicked matches in image 2 (images are at most 1200 px on the long side).</p>
+  <table>
+    <tr><th>Pair</th><th>Points</th><th>Mean error (px)</th><th>Worst (px)</th></tr>
+    <tr><td>campus 1 &rarr; 2</td><td>10</td><td>XX</td><td>XX</td></tr>
+    <tr><td>campus 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
+    <tr><td>street 1 &rarr; 2</td><td>10</td><td>XX</td><td>XX</td></tr>
+    <tr><td>street 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
+    <tr><td>gateway 1 &rarr; 2</td><td>10</td><td>XX</td><td>XX</td></tr>
+    <tr><td>gateway 2 &rarr; 3</td><td>10</td><td>XX</td><td>XX</td></tr>
+  </table>
+</div>
+
+<!-- A.3 -->
+<div class="card">
+  <h2>A.3 Warping the Images</h2>
+  <p>
+    I warp with <strong>inverse warping</strong>: the output bounding box comes from sending the four corners of the input through $H$, and for every output pixel I compute where it came from with
+    $H^{-1}$ and sample the source image there. Forward warping would leave holes wherever $H$ stretches the image; inverse warping gives every output pixel exactly one value.
+    Output pixels whose source falls outside the image get value $0$ and are marked invalid in an alpha mask, which the mosaic step uses later.
+  </p>
+  <p>I implemented both interpolation methods from scratch, with the integer coordinate denoting the center of a pixel:</p>
+  <ul>
+    <li><strong>Nearest neighbor:</strong> round the source coordinate to the closest pixel and copy its value.</li>
+    <li><strong>Bilinear:</strong> take the four surrounding pixels and weight each by the area of the sub-rectangle opposite to it, with $f_x, f_y$ the fractional parts:</li>
+  </ul>
+  <div class="formula-card">
+    $$I(x,y) = (1-f_x)(1-f_y)I_{00} + f_x(1-f_y)I_{10} + (1-f_x)f_y I_{01} + f_x f_y I_{11}$$
+  </div>
+
+  <h3>Rectification</h3>
+  <p>
+    To test the warp, I rectified two objects that I know are rectangles. I clicked the four corners of each object and mapped them to an upright rectangle with the object's real aspect ratio,
+    then warped a window around it.
+  </p>
+
+  <h4>Window shutter (facade)</h4>
+  <div class="img-container">
+    <img class="display-img" src="results/facade_rectification.png" alt="Facade rectification">
+    <div class="img-caption">Input with clicked corners | nearest neighbor | bilinear</div>
+  </div>
+  <h4>Street sign</h4>
+  <div class="img-container">
+    <img class="display-img" src="results/streetSign_rectification.png" alt="Street sign rectification">
+    <div class="img-caption">Input with clicked corners | nearest neighbor | bilinear</div>
+  </div>
+  <p><strong>Observations:</strong> [Describe: do the edges of the object come out straight and parallel? What about things off the plane, like the wall around the shutter or the pole?]</p>
+
+  <h3>Nearest neighbor vs. bilinear</h3>
+  <div class="grid2">
+    <div><img class="display-img" src="results/facade_nn.png" alt="facade nearest neighbor"><div class="img-caption">Facade: nearest neighbor</div></div>
+    <div><img class="display-img" src="results/facade_bilinear.png" alt="facade bilinear"><div class="img-caption">Facade: bilinear</div></div>
+    <div><img class="display-img" src="results/streetSign_nn.png" alt="sign nearest neighbor"><div class="img-caption">Street sign: nearest neighbor</div></div>
+    <div><img class="display-img" src="results/streetSign_bilinear.png" alt="sign bilinear"><div class="img-caption">Street sign: bilinear</div></div>
+  </div>
+  <table>
+    <tr><th>Image</th><th>Nearest neighbor</th><th>Bilinear</th></tr>
+    <tr><td>Facade</td><td>XX ms</td><td>XX ms</td></tr>
+    <tr><td>Street sign</td><td>XX ms</td><td>XX ms</td></tr>
+  </table>
+  <p>
+    <strong>Quality vs. speed:</strong> Nearest neighbor does one lookup per output pixel, so it is the faster of the two, but it turns edges and text into jagged stair-steps. Bilinear does four lookups plus the weights
+    for every pixel, so it takes roughly [X]&times; as long, but it produces smooth edges and is only slightly softer. The difference is small in absolute time, so I used bilinear for all the mosaics, where jagged edges would
+    show up in every overlap.
+  </p>
+</div>
+
+<!-- A.4 -->
+<div class="card">
+  <h2>A.4 Blending Images into a Mosaic</h2>
+  <p>My procedure for each mosaic of three photos:</p>
+  <ol>
+    <li>Compute homographies between adjacent images, then compose them (e.g. image 1 &rarr; image 3 is $H_{23}^{-1}\ldots$ chained appropriately) so every image maps into the <strong>middle image's frame</strong>, which stays unwarped.</li>
+    <li>Send every image's four corners through its homography and take the union bounding box, which gives one shared canvas size.</li>
+    <li>Inverse-warp each image (bilinear) onto its own canvas of that size, along with a weight map equal to the distance to the nearest image edge (normalized to 1 at the center, like <code>bwdist</code>), warped as an extra channel.</li>
+    <li>Blend. I compared three methods: <strong>overwrite</strong> (hard seams), <strong>feathering</strong> (weighted average, $\sum w_i I_i / \sum w_i$), and <strong>two-band blending</strong>.</li>
+  </ol>
+  <p>
+    <strong>Two-band blending</strong> is a two-level Laplacian pyramid. Each image is split into a low band (Gaussian blur) and a high band (image minus blur). The low bands are feathered, so color and brightness fade
+    smoothly across the overlap. The high bands are taken from whichever image has the largest weight at each pixel, so edges are never averaged and do not ghost. The blur is computed only over each image's own valid pixels so that the black border does
+    not darken the edges.
+  </p>
+
+  <h3>Intermediate results (campus)</h3>
+  <div class="grid3">
+    <div><img class="display-img" src="results/campus_warped_0.png" alt="campus warped 1"><div class="img-caption">Image 1 warped</div></div>
+    <div><img class="display-img" src="results/campus_warped_1.png" alt="campus warped 2"><div class="img-caption">Image 2 (reference)</div></div>
+    <div><img class="display-img" src="results/campus_warped_2.png" alt="campus warped 3"><div class="img-caption">Image 3 warped</div></div>
+    <div><img class="display-img" src="results/campus_weight_0.png" alt="campus weight 1"><div class="img-caption">Weights 1</div></div>
+    <div><img class="display-img" src="results/campus_weight_1.png" alt="campus weight 2"><div class="img-caption">Weights 2</div></div>
+    <div><img class="display-img" src="results/campus_weight_2.png" alt="campus weight 3"><div class="img-caption">Weights 3</div></div>
+  </div>
+
+  <h3>Mosaic 1: Campus interior</h3>
+  <div class="grid3">
+    <img class="display-img" src="data/campus_1.jpg" alt="campus 1">
+    <img class="display-img" src="data/campus_2.jpg" alt="campus 2">
+    <img class="display-img" src="data/campus_3.jpg" alt="campus 3">
+  </div>
+  <div class="img-container">
+    <img class="display-img" src="results/campus_two_band.png" alt="Campus mosaic">
+    <div class="img-caption">Campus mosaic (two-band blending)</div>
+  </div>
+  <div class="img-container">
+    <img class="display-img" src="results/campus_blend_comparison.png" alt="Campus blend comparison">
+    <div class="img-caption">Overwrite | feathering | two-band</div>
+  </div>
+
+  <h3>Mosaic 2: Street</h3>
+  <div class="grid3">
+    <img class="display-img" src="data/street_1.jpg" alt="street 1">
+    <img class="display-img" src="data/street_2.jpg" alt="street 2">
+    <img class="display-img" src="data/street_3.jpg" alt="street 3">
+  </div>
+  <div class="img-container">
+    <img class="display-img" src="results/street_two_band.png" alt="Street mosaic">
+    <div class="img-caption">Street mosaic (two-band blending)</div>
+  </div>
+  <div class="img-container">
+    <img class="display-img" src="results/street_blend_comparison.png" alt="Street blend comparison">
+    <div class="img-caption">Overwrite | feathering | two-band</div>
+  </div>
+
+  <h3>Mosaic 3: Gateway</h3>
+  <div class="grid3">
+    <img class="display-img" src="data/gateway_1.jpg" alt="gateway 1">
+    <img class="display-img" src="data/gateway_2.jpg" alt="gateway 2">
+    <img class="display-img" src="data/gateway_3.jpg" alt="gateway 3">
+  </div>
+  <div class="img-container">
+    <img class="display-img" src="results/gateway_two_band.png" alt="Gateway mosaic">
+    <div class="img-caption">Gateway mosaic (two-band blending)</div>
+  </div>
+  <div class="img-container">
+    <img class="display-img" src="results/gateway_blend_comparison.png" alt="Gateway blend comparison">
+    <div class="img-caption">Overwrite | feathering | two-band</div>
+  </div>
+
+  <h3>Discussion</h3>
+  <ul>
+    <li><strong>Overwrite:</strong> [describe the visible seams, e.g. brightness jumps]</li>
+    <li><strong>Feathering:</strong> [seams disappear, but misaligned detail is doubled/ghosted]</li>
+    <li><strong>Two-band:</strong> [smooth color transitions with sharp detail]</li>
+    <li><strong>Remaining artifacts:</strong> [e.g. parallax from nearby objects such as the couches, small errors from hand-clicked points, handheld rotation not about the exact center of projection]</li>
+  </ul>
+</div>
+
+<!-- A.5 (optional) -->
+<!--
+<div class="card">
+  <h2>A.5 Bells &amp; Whistles: Cylindrical Projection (CS280A)</h2>
+  <p>Each photo is projected onto a cylinder with inverse sampling, then stitched by translation only.</p>
+  <div class="img-container"><img class="display-img" src="results/street_cyl_cyl_two_band.png" alt="Cylindrical mosaic"></div>
+</div>
+-->
+
+</main>
+</body>
+</html>
