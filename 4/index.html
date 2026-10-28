@@ -110,6 +110,12 @@ th { background:#f1f5f9; }
     <img class="display-img" src="street_2.jpg" alt="street 2">
     <img class="display-img" src="street_3.jpg" alt="street 3">
   </div>
+  <h3>Campus Architecture (Giannini Hall Exterior)</h3>
+  <div class="grid3">
+  <div><img class="display-img" src="architecture1.jpg" alt="Architecture Left"><div class="img-caption">architecture1.jpg (Left)</div></div>
+  <div><img class="display-img" src="architecture2.jpg" alt="Architecture Center"><div class="img-caption">architecture2.jpg (Center/Reference)</div></div>
+  <div><img class="display-img" src="architecture3.jpg" alt="Architecture Right"><div class="img-caption">architecture3.jpg (Right)</div></div>
+  </div>
   <p>For rectification I used two photos of known rectangular objects taken from an angle: a window shutter on a facade and a street sign.</p>
   <div class="grid2">
     <img class="display-img" src="facade.jpg" alt="facade">
@@ -158,6 +164,8 @@ th { background:#f1f5f9; }
     <div><img class="display-img" src="campus_corr_1_2.png" alt="campus correspondences 2-3"><div class="img-caption">Campus: image 2 &harr; 3</div></div>
     <div><img class="display-img" src="street_corr_0_1.png" alt="street correspondences 1-2"><div class="img-caption">Street: image 1 &harr; 2</div></div>
     <div><img class="display-img" src="street_corr_1_2.png" alt="street correspondences 2-3"><div class="img-caption">Street: image 2 &harr; 3</div></div>
+    <div><img class="display-img" src="architecture_corr_0_1.png" alt="Architecture 1-2 Correspondences"><div class="img-caption">Architecture: Image 1 &harr; 2</div></div>
+    <div><img class="display-img" src="architecture_corr_1_2.png" alt="Architecture 2-3 Correspondences"><div class="img-caption">Architecture: Image 2 &harr; 3</div></div>
   </div>
 
   <h3>System of equations and recovered homography</h3>
@@ -329,6 +337,26 @@ th { background:#f1f5f9; }
     <img class="display-img" src="street_blend_comparison.png" alt="Street blend comparison">
     <div class="img-caption">Overwrite | feathering | two-band</div>
   </div>
+  <h3>Intermediate Warped Images &amp; Distance Weights</h3>
+<div class="grid3">
+  <div><img class="display-img" src="architecture_warped_0.png" alt="Warped 1"><div class="img-caption">Image 1 Warped</div></div>
+  <div><img class="display-img" src="architecture_warped_1.png" alt="Warped 2"><div class="img-caption">Image 2 (Reference)</div></div>
+  <div><img class="display-img" src="architecture_warped_3.png" alt="Warped 3"><div class="img-caption">Image 3 Warped</div></div>
+  <div><img class="display-img" src="architecture_weight_0.png" alt="Weights 1"><div class="img-caption">Weights 1</div></div>
+  <div><img class="display-img" src="architecture_weight_1.png" alt="Weights 2"><div class="img-caption">Weights 2</div></div>
+  <div><img class="display-img" src="architecture_weight_3.png" alt="Weights 3"><div class="img-caption">Weights 3</div></div>
+</div>
+
+<h3>Final Mosaic &amp; Blending Comparison</h3>
+<div class="img-container">
+  <img class="display-img" src="architecture_two_band.png" alt="Architecture Two-Band Mosaic">
+  <div class="img-caption">Campus Architecture Panorama (Two-Band Laplacian Pyramid Blending)</div>
+</div>
+
+<div class="img-container">
+  <img class="display-img" src="architecture_blend_comparison.png" alt="Blending Comparison">
+  <div class="img-caption">Blending Comparison: Overwrite | Feathering | Two-Band Blending</div>
+</div>
 
   <h3>Discussion</h3>
   <ul>
