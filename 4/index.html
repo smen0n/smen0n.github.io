@@ -243,10 +243,17 @@ th { background:#f1f5f9; }
 
   <p>Recovered homographies for the two rectifications (image &rarr; rectified rectangle):</p>
   <div class="formula-card">
-    $$H_{\text{facade}} = \begin{bmatrix} 8.599 & 0.547 & -3031.6 \\ 3.511 & 4.712 & -2521.9 \\ 0.0065 & 0.0013 & 1 \end{bmatrix}, \quad
-    H_{\text{sign}} = \begin{bmatrix} 4.541 & 0.141 & -1603.1 \\ 0.843 & 3.527 & -1429.4 \\ 0.00086 & 0.00003 & 1 \end{bmatrix}$$
+    $$H_{\text{facade}} = \begin{bmatrix} 8.599 & 0.547 & -3031.6 \\ 3.511 & 4.712 & -2521.9 \\ 0.0065 & 0.0013 & 1 \end{bmatrix}$$
   </div>
-  <p><strong>Observations:</strong> [Describe: do the edges of the object come out straight and parallel? What about things off the plane, like the wall around the shutter or the pole?]</p>
+  <div class="formula-card">
+    $$H_{\text{sign}} = \begin{bmatrix} 4.541 & 0.141 & -1603.1 \\ 0.843 & 3.527 & -1429.4 \\ 0.00086 & 0.00003 & 1 \end{bmatrix}$$
+  </div>
+  <p>
+    <strong>Observations:</strong> Both objects come out front-on. The shutter's frame and slats are straight, parallel and at right angles, and the street sign's border and
+    arrows are upright and undistorted. Everything that lies on the same plane as the object is rectified with it, so the patterned wall around the shutter looks flat. Things off that plane do not
+    straighten. The shutter's frame and windowsill stick out from the wall, so they look slightly bent, and the pole under the street sign and the storefront behind it are stretched and blurry because
+    the homography enlarges the far parts of the image the most. The black triangle in the top-right corner of the facade result is the area that lies outside the original photo, which the inverse warp leaves empty.
+  </p>
 
   <h3>Nearest neighbor vs. bilinear</h3>
   <div class="grid2">
@@ -325,10 +332,10 @@ th { background:#f1f5f9; }
 
   <h3>Discussion</h3>
   <ul>
-    <li><strong>Overwrite:</strong> [describe the visible seams, e.g. brightness jumps]</li>
-    <li><strong>Feathering:</strong> [seams disappear, but misaligned detail is doubled/ghosted]</li>
-    <li><strong>Two-band:</strong> [smooth color transitions with sharp detail]</li>
-    <li><strong>Remaining artifacts:</strong> [e.g. parallax from nearby objects such as the couches, small errors from hand-clicked points, handheld rotation not about the exact center of projection]</li>
+    <li><strong>Overwrite:</strong> Pasting each photo over the previous one leaves a visible vertical seam. In the campus mosaic it cuts across the smooth ceiling and the wall, because each shot has slightly different exposure, so the brightness jumps at the boundary. A fainter seam shows in the sky and road of the street mosaic.</li>
+    <li><strong>Feathering:</strong> The weighted average removes those seams, since each photo fades out as the next fades in. It treats every frequency the same, so any detail that is slightly misaligned between the two photos gets averaged into a softer or doubled edge, mostly along high-contrast edges in the overlap.</li>
+    <li><strong>Two-band:</strong> Feathering the low frequencies keeps the colors transitioning smoothly, while taking the high frequencies from one photo keeps edges sharp. This gave me no visible seams in either mosaic and the sharpest overlaps of the three methods. I used it for the final mosaics.</li>
+    <li><strong>Remaining artifacts:</strong> The mosaics have the typical bow-tie shape with black borders, because the left and right photos get stretched when they are warped into the middle photo's frame. Some residual misalignment comes from my hand-clicked correspondences (mean reprojection error 1&ndash;4 px), from holding the camera by hand so the center of projection was not perfectly fixed, and from nearby objects such as the couches and the pole at the street corner, which shift between shots and cannot be matched by one homography. The street 1 &rarr; 2 pair had the largest error (4.08 px mean).</li>
   </ul>
 </div>
 
