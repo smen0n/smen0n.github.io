@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CS180 Project 4: Image Warping, Mosaicing and Feature Matching</title> 
+<title>CS180 Project 4: Image Warping, Mosaicing and Feature Matching</title>
 
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -412,21 +412,21 @@ th { background:#f1f5f9; }
 
   <h3>Campus (middle photo)</h3>
   <div class="grid3">
-    <div><img class="display-img" src="results_b/campus_2_harris.png" alt="campus Harris corners"><div class="img-caption">All Harris corners</div></div>
-    <div><img class="display-img" src="results_b/campus_2_strongest500.png" alt="campus strongest 500"><div class="img-caption">Strongest 500, no ANMS</div></div>
-    <div><img class="display-img" src="results_b/campus_2_anms500.png" alt="campus ANMS 500"><div class="img-caption">500 with ANMS</div></div>
+    <div><img class="display-img" src="campus_2_harris.png" alt="campus Harris corners"><div class="img-caption">All Harris corners</div></div>
+    <div><img class="display-img" src="campus_2_strongest500.png" alt="campus strongest 500"><div class="img-caption">Strongest 500, no ANMS</div></div>
+    <div><img class="display-img" src="campus_2_anms500.png" alt="campus ANMS 500"><div class="img-caption">500 with ANMS</div></div>
   </div>
   <h3>Street (middle photo)</h3>
   <div class="grid3">
-    <div><img class="display-img" src="results_b/street_2_harris.png" alt="street Harris corners"><div class="img-caption">All Harris corners</div></div>
-    <div><img class="display-img" src="results_b/street_2_strongest500.png" alt="street strongest 500"><div class="img-caption">Strongest 500, no ANMS</div></div>
-    <div><img class="display-img" src="results_b/street_2_anms500.png" alt="street ANMS 500"><div class="img-caption">500 with ANMS</div></div>
+    <div><img class="display-img" src="street_2_harris.png" alt="street Harris corners"><div class="img-caption">All Harris corners</div></div>
+    <div><img class="display-img" src="street_2_strongest500.png" alt="street strongest 500"><div class="img-caption">Strongest 500, no ANMS</div></div>
+    <div><img class="display-img" src="street_2_anms500.png" alt="street ANMS 500"><div class="img-caption">500 with ANMS</div></div>
   </div>
   <h3>Architecture (middle photo)</h3>
   <div class="grid3">
-    <div><img class="display-img" src="results_b/architecture2_harris.png" alt="architecture Harris corners"><div class="img-caption">All Harris corners</div></div>
-    <div><img class="display-img" src="results_b/architecture2_strongest500.png" alt="architecture strongest 500"><div class="img-caption">Strongest 500, no ANMS</div></div>
-    <div><img class="display-img" src="results_b/architecture2_anms500.png" alt="architecture ANMS 500"><div class="img-caption">500 with ANMS</div></div>
+    <div><img class="display-img" src="architecture2_harris.png" alt="architecture Harris corners"><div class="img-caption">All Harris corners</div></div>
+    <div><img class="display-img" src="architecture2_strongest500.png" alt="architecture strongest 500"><div class="img-caption">Strongest 500, no ANMS</div></div>
+    <div><img class="display-img" src="architecture2_anms500.png" alt="architecture ANMS 500"><div class="img-caption">500 with ANMS</div></div>
   </div>
   <p>
     Without ANMS the strongest 500 cluster on a few high-contrast regions and leave large areas with nothing. With ANMS the same number of points covers the whole frame.
@@ -458,15 +458,15 @@ patch   = (patch - patch.mean()) / (patch.std() + 1e-8)</code></pre>
   <h3>Extracted features</h3>
   <p>Left: a random sample of kept features with their 40&times;40 windows outlined and numbered. Right: the normalized 8&times;8 descriptor for each, which looks like a blurry thumbnail of its window.</p>
   <div class="img-container">
-    <img class="display-img" src="results_b/campus_2_descriptors.png" alt="campus descriptors">
+    <img class="display-img" src="campus_2_descriptors.png" alt="campus descriptors">
     <div class="img-caption">Campus: sampled windows and their 8&times;8 descriptors</div>
   </div>
   <div class="img-container">
-    <img class="display-img" src="results_b/street_2_descriptors.png" alt="street descriptors">
+    <img class="display-img" src="street_2_descriptors.png" alt="street descriptors">
     <div class="img-caption">Street: sampled windows and their 8&times;8 descriptors</div>
   </div>
   <div class="img-container">
-    <img class="display-img" src="results_b/architecture2_descriptors.png" alt="architecture descriptors">
+    <img class="display-img" src="architecture2_descriptors.png" alt="architecture descriptors">
     <div class="img-caption">Architecture: sampled windows and their 8&times;8 descriptors</div>
   </div>
 </div>
@@ -497,15 +497,15 @@ matches = ratio &lt; 0.5</code></pre>
 
   <h3>Matches that pass the ratio test (first pair of each set)</h3>
   <div class="img-container">
-    <img class="display-img" src="results_b/campus_matches_0_1.png" alt="campus matches">
+    <img class="display-img" src="campus_matches_0_1.png" alt="campus matches">
     <div class="img-caption">Campus: image 1 &harr; 2</div>
   </div>
   <div class="img-container">
-    <img class="display-img" src="results_b/street_matches_0_1.png" alt="street matches">
+    <img class="display-img" src="street_matches_0_1.png" alt="street matches">
     <div class="img-caption">Street: image 1 &harr; 2</div>
   </div>
   <div class="img-container">
-    <img class="display-img" src="results_b/architecture_matches_0_1.png" alt="architecture matches">
+    <img class="display-img" src="architecture_matches_0_1.png" alt="architecture matches">
     <div class="img-caption">Architecture: image 1 &harr; 2</div>
   </div>
   <p>
@@ -538,15 +538,15 @@ H = computeH(p1[best_mask], p2[best_mask])     # refit on all inliers</code></pr
   <h3>RANSAC inliers and outliers</h3>
   <p>Green lines are inliers that agree with the final homography and red lines are matches RANSAC rejected.</p>
   <div class="img-container">
-    <img class="display-img" src="results_b/campus_ransac_0_1.png" alt="campus RANSAC">
+    <img class="display-img" src="campus_ransac_0_1.png" alt="campus RANSAC">
     <div class="img-caption">Campus: image 1 &harr; 2</div>
   </div>
   <div class="img-container">
-    <img class="display-img" src="results_b/street_ransac_0_1.png" alt="street RANSAC">
+    <img class="display-img" src="street_ransac_0_1.png" alt="street RANSAC">
     <div class="img-caption">Street: image 1 &harr; 2 &mdash; 61 inliers out of 110 matches</div>
   </div>
   <div class="img-container">
-    <img class="display-img" src="results_b/architecture_ransac_0_1.png" alt="architecture RANSAC">
+    <img class="display-img" src="architecture_ransac_0_1.png" alt="architecture RANSAC">
     <div class="img-caption">Architecture: image 1 &harr; 2</div>
   </div>
   <p>
@@ -560,17 +560,17 @@ H = computeH(p1[best_mask], p2[best_mask])     # refit on all inliers</code></pr
   </p>
   <h4>Campus</h4>
   <div class="img-container">
-    <img class="display-img" src="results_b/campus_manual_vs_auto.png" alt="campus manual vs automatic">
+    <img class="display-img" src="campus_manual_vs_auto.png" alt="campus manual vs automatic">
     <div class="img-caption">Left: Part A (manual points). Right: Part B (automatic).</div>
   </div>
   <h4>Street</h4>
   <div class="img-container">
-    <img class="display-img" src="results_b/street_manual_vs_auto.png" alt="street manual vs automatic">
+    <img class="display-img" src="street_manual_vs_auto.png" alt="street manual vs automatic">
     <div class="img-caption">Left: Part A (manual points). Right: Part B (automatic).</div>
   </div>
   <h4>Architecture</h4>
   <div class="img-container">
-    <img class="display-img" src="results_b/architecture_manual_vs_auto.png" alt="architecture manual vs automatic">
+    <img class="display-img" src="architecture_manual_vs_auto.png" alt="architecture manual vs automatic">
     <div class="img-caption">Left: Part A (manual points). Right: Part B (automatic).</div>
   </div>
 
